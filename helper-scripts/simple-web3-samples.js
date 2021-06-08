@@ -28,6 +28,7 @@ var sleep = require('system-sleep');
 sleep(5*1000); // sleep for 5 seconds
 var myAddress = fs.readFileSync('myaddress.txt', 'utf-8');
 
+
 async function sendOnlyone(fromAddress, toAddress) {
 
     var Tx = require('ethereumjs-tx').Transaction;
@@ -69,6 +70,11 @@ async function sendOnlyone(fromAddress, toAddress) {
     return result;
 }
 
+var targetIndex = Number(process.argv.splice(2)[0]);
+
+console.log(targetIndex);
+
+sendOnlyone(myAddress, targetAccounts[targetIndex].address);
 
 
 // check the balance
@@ -76,3 +82,45 @@ contract.methods.balanceOf(myAddress).call()
     .then(function(balance){
         console.log(balance)
     })
+
+//dependent libraries:
+var depLibs = {
+    "ethereumjs-common": {
+      "version": "1.5.2",
+      "resolved": "https://registry.npmjs.org/ethereumjs-common/-/ethereumjs-common-1.5.2.tgz",
+      "integrity": "sha512-hTfZjwGX52GS2jcVO6E2sx4YuFnf0Fhp5ylo4pEPhEffNln7vS59Hr5sLnp3/QCazFLluuBZ+FZ6J5HTp0EqCA=="
+    },
+    "ethereumjs-tx": {
+      "version": "2.1.2",
+      "resolved": "https://registry.npmjs.org/ethereumjs-tx/-/ethereumjs-tx-2.1.2.tgz",
+      "integrity": "sha512-zZEK1onCeiORb0wyCXUvg94Ve5It/K6GD1K+26KfFKodiBiS6d9lfCXlUKGBBdQ+bv7Day+JK0tj1K+BeNFRAw==",
+      "requires": {
+        "ethereumjs-common": "^1.5.0",
+        "ethereumjs-util": "^6.0.0"
+      }
+    },
+    "web3": {
+      "version": "1.3.6",
+      "resolved": "https://registry.npmjs.org/web3/-/web3-1.3.6.tgz",
+      "integrity": "sha512-jEpPhnL6GDteifdVh7ulzlPrtVQeA30V9vnki9liYlUvLV82ZM7BNOQJiuzlDePuE+jZETZSP/0G/JlUVt6pOA==",
+      "requires": {
+        "web3-bzz": "1.3.6",
+        "web3-core": "1.3.6",
+        "web3-eth": "1.3.6",
+        "web3-eth-personal": "1.3.6",
+        "web3-net": "1.3.6",
+        "web3-shh": "1.3.6",
+        "web3-utils": "1.3.6"
+      }
+    },
+};
+
+// Usage: - sends token to 50 addresses in accounts.txt
+for (( c=1; c<50; c++))
+do
+  node simple-web3-samples.js $c
+  sleep 60
+done
+
+        
+        
