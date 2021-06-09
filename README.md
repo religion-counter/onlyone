@@ -1,10 +1,6 @@
 # onlyone
-All development related with the ONLYONE token.
+All development related with the ONLYONE finance.
 
-Are you tired of holding billions of shit coins worth nothing!
-You can now own part of the precious ONLYONE token.
-There is ONLYONE token!
-You can only buy part of the ONLYONE token.
 ONLYONE Total Supply: 1
 Contract creation:
 https://bscscan.com/tx/0x1becbd78297f267dec48aacb905bb5b549b16ed5e1ac1281986123ff44df46f8
