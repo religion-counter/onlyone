@@ -6,13 +6,17 @@ import java.util.UUID;
 
 public class GameState {
 
-    final int NUMBER_OF_DECKS = 6;
+    final int NUMBER_OF_DECKS = 8;
+    final int DEALER_LIMIT = 17;
+    final int BLACKJACK_SCORE = 21;
 
     final String gameId;
     final List<Player> players;
     final List<Card> dealerCards;
+    boolean dealerBlackjack = false;
     int playerIndex;
     int numberOfPlayers;
+    double[] playerBets;
 
     final List<Card> cardsForDraw = new ArrayList<>();
 
@@ -26,7 +30,7 @@ public class GameState {
         }
     }
 
-    Card getRandomCard() {
+    public Card getRandomCard() {
         if (cardsForDraw.isEmpty()) {
             throw new RuntimeException("Deck is empty.");
         }
@@ -36,7 +40,8 @@ public class GameState {
         return result;
     }
 
-    GameState(final int numberOfPlayers) {
+    public GameState(final int numberOfPlayers, double[] playerBets) {
+        this.playerBets = playerBets;
         gameId = UUID.randomUUID().toString();
         players = new ArrayList<>();
         for (int i = 0; i < numberOfPlayers; ++i) {
@@ -46,14 +51,24 @@ public class GameState {
         this.numberOfPlayers = numberOfPlayers;
         playerIndex = 0;
 
-        while (getSoftScore(dealerCards) < 16 && getHardScore(dealerCards) < 16) {
+        fillDeck();
+
+        while (getSoftScore(dealerCards) <= DEALER_LIMIT && getHardScore(dealerCards) < DEALER_LIMIT) {
             dealerCards.add(getRandomCard());
         }
 
-        fillDeck();
-        for (int player = 0; player < players.size(); ++player) {
-            players.get(player).cards.add(getRandomCard());
-            players.get(player).cards.add(getRandomCard());
+        if (dealerCards.size() == 2 && getSoftScore(dealerCards) == BLACKJACK_SCORE) {
+            dealerBlackjack = true;
+        }
+
+        for (int playerIdx = 0; playerIdx < players.size(); ++playerIdx) {
+            final Player player = players.get(playerIdx);
+            for (int j = 0; j < 2; ++j) {
+                player.cards.add(getRandomCard());
+            }
+            if (getSoftScore(player.cards) == BLACKJACK_SCORE) {
+                player.hasBlackjack = true;
+            }
         }
     }
 

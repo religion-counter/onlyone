@@ -5,6 +5,6 @@ import java.util.Random;
 
 public class RandomGenerator {
 
-    static SecureRandom secureRandom = new SecureRandom();
+    public static SecureRandom secureRandom = new SecureRandom();
 
 }

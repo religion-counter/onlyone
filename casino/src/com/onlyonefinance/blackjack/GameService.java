@@ -1,40 +1,296 @@
 package com.onlyonefinance.blackjack;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+/**
+ * TODO Return read only objects.
+ */
 public class GameService {
 
-    public GameState startGame(int numberOfPlayers) {
-        final GameState res = new GameState(numberOfPlayers);
+    public final static int MAX_NUMBER_OF_PLAYERS = 8;
 
-        return res;
+    public UserVisibleState startGame(int numberOfPlayers, double[] playerBets) {
+        if (numberOfPlayers < 1 || numberOfPlayers > MAX_NUMBER_OF_PLAYERS) {
+            throw new RuntimeException("Invalid number of players for one game: " + numberOfPlayers);
+        }
+        final GameState res = new GameState(numberOfPlayers, playerBets);
+
+        if (res.dealerBlackjack) {
+            res.playerIndex = res.players.size();
+        }
+
+        return new UserVisibleState(res);
     }
 
-    public GameState playerHit(GameState state, int playerIndex) {
+    void advancePlayer(GameState state) {
+        if (state.playerIndex == state.numberOfPlayers) {
+            throw new RuntimeException("Already last player");
+        }
+        while (state.playerIndex < state.numberOfPlayers) {
+            state.playerIndex += 1;
+            if (state.players.size() == state.playerIndex) {
+                break;
+            }
+            if (state.players.get(state.playerIndex).isDone) {
+                continue;
+            }
+            break;
+        }
+    }
 
-        // Check if player can hit and player score
+    public UserVisibleState playerHit(UserVisibleState ustate, int playerIndex) {
 
-        state.players.get(playerIndex).cards.add(state.getRandomCard());
+        GameState state = ustate.state;
 
-        return state;
+        Player player = state.players.get(playerIndex);
+
+        if (player.isDone) {
+            throw new RuntimeException("Player finished his turn.");
+        }
+
+        int hardScore = state.getHardScore(player.cards);
+        if (hardScore > 20) {
+            throw new RuntimeException("Player cannot hit with score: " + hardScore);
+        }
+
+        player.cards.add(state.getRandomCard());
+        hardScore = state.getHardScore(player.cards);
+        if (hardScore > 20) {
+            player.isDone = true;
+            advancePlayer(state);
+        }
+
+        return new UserVisibleState(state);
     }
 
 
-    public GameState playerDouble(GameState state, int playerIndex) {
+    public UserVisibleState playerDouble(UserVisibleState ustate, int playerIndex) {
 
-        // Check if player can double and player score
-        state.players.get(playerIndex).cards.add(state.getRandomCard());
-        state.players.get(playerIndex).isDone = true;
+        GameState state = ustate.state;
+        state.playerBets[playerIndex] *= 2;
 
-        return state;
+        Player player = state.players.get(playerIndex);
+        if (player.isDone) {
+            throw new RuntimeException("Player finished his turn.");
+        }
+
+        int hardScore = state.getHardScore(player.cards);
+        if (hardScore > 20) {
+            throw new RuntimeException("Player cannot hit with score: " + hardScore);
+        }
+
+        player.cards.add(state.getRandomCard());
+        player.isDone = true;
+        advancePlayer(state);
+
+        return new UserVisibleState(state);
     }
 
-    public GameState playerStay(GameState state, int playerIndex) {
+    public UserVisibleState playerSplit(UserVisibleState ustate, int playerIndex) {
 
-        // Check if player can stay and player score
-        state.players.get(playerIndex).isDone = true;
+        GameState state = ustate.state;
 
-        return state;
+        Player player = state.players.get(playerIndex);
+
+        if (player.isDone) {
+            throw new RuntimeException("Player is done.");
+        }
+        boolean canSplit = false;
+        if (player.cards.size() == 2) {
+            if (player.cards.get(0).type == player.cards.get(1).type) {
+                canSplit = true;
+            }
+        }
+        if (!canSplit) {
+            throw new RuntimeException("Can split only 2 equal cards.");
+        }
+        if (player.canSplit < 1) {
+            throw new RuntimeException("Player can split only twice");
+        }
+        double[] newBets = new double[state.playerBets.length + 1];
+        for (int i = 0; i < state.playerBets.length; ++i) {
+            if (i < playerIndex) {
+                newBets[i] = state.playerBets[i];
+            } else {
+                newBets[playerIndex] = state.playerBets[playerIndex];
+                newBets[i+1] = state.playerBets[i];
+            }
+        }
+        state.playerBets = newBets;
+
+        player.canSplit -= 1;
+        Card cardForNewPlayer = player.cards.remove(1);
+
+        Player newPlayer = new Player();
+        newPlayer.canSplit = player.canSplit;
+        player.cards.add(state.getRandomCard());
+        newPlayer.cards.add(cardForNewPlayer);
+        newPlayer.cards.add(state.getRandomCard());
+        if (cardForNewPlayer.type == Card.Type.ACE) {
+            player.isDone = true;
+            newPlayer.isDone = true;
+            advancePlayer(state);
+            advancePlayer(state);
+        }
+        if (state.getSoftScore(player.cards) == state.BLACKJACK_SCORE) {
+            player.hasBlackjack = true;
+        }
+        if (state.getSoftScore(newPlayer.cards) == state.BLACKJACK_SCORE) {
+            newPlayer.hasBlackjack = true;
+        }
+        state.players.add(playerIndex + 1, newPlayer);
+        state.numberOfPlayers += 1;
+
+        return new UserVisibleState(state);
     }
 
-    
+    public UserVisibleState playerStay(UserVisibleState ustate, int playerIndex) {
 
+        GameState state = ustate.state;
+
+        if (state.playerIndex != playerIndex) {
+            throw new RuntimeException("Not expected stay because player is not on turn.");
+        }
+        Player player = state.players.get(playerIndex);
+        if (player.isDone) {
+            throw new RuntimeException("Player is done with his turns.");
+        }
+        player.isDone = true;
+        advancePlayer(state);
+
+        return new UserVisibleState(state);
+    }
+
+    public class UserVisibleState {
+        public final List<Card> dealerVisibleCards;
+        public final int dealerScore;
+        public final boolean dealerBlackjack;
+        public final List<Card>[] playersCards;
+        public final int[] playersSoftScore;
+        public final int[] playersHardScore;
+        public int playerIndex;
+        public final boolean[] playerBlackjackStatus;
+        public final int splitsLeft[]; // TODO implement split
+        public final boolean canCurrentPlayerDouble = false; // TODO implement double
+        private final GameState state;
+        public final double[] playerWinMultiplier;
+        public final String gameId;
+        public String[] playerIds;
+
+        UserVisibleState(GameState state) {
+            gameId = state.gameId;
+            splitsLeft = new int[state.numberOfPlayers];
+            final List<Card> dealerCards = state.dealerCards;
+            if (state.playerIndex == state.numberOfPlayers) {
+                dealerVisibleCards = Collections.unmodifiableList(dealerCards);
+                int dealerSoftScore = state.getSoftScore(dealerCards);
+                int dealerHardScore = state.getHardScore(dealerCards);
+                if (dealerHardScore > 16) {
+                    dealerScore = dealerHardScore;
+                } else {
+                    dealerScore = dealerSoftScore;
+                }
+                dealerBlackjack = false;
+            } else if (state.dealerBlackjack) {
+                dealerVisibleCards = Collections.unmodifiableList(dealerCards);
+                dealerScore = state.BLACKJACK_SCORE;
+                dealerBlackjack = true;
+            } else {
+                // First we return only the first card of the dealer
+                dealerVisibleCards = Collections.singletonList(dealerCards.get(0));
+                dealerScore = state.getSoftScore(dealerVisibleCards);
+                dealerBlackjack = false;
+            }
+
+            playerWinMultiplier = new double[state.numberOfPlayers];
+
+            int numPlayers = state.players.size();
+            playersCards = new List[numPlayers];
+            playersSoftScore = new int[numPlayers];
+            playersHardScore = new int[numPlayers];
+            playerBlackjackStatus = new boolean[numPlayers];
+            playerIndex = state.playerIndex;
+            playerIds = new String[numPlayers];
+            for (int i = 0; i < state.players.size(); ++i) {
+                final Player player = state.players.get(i);
+                splitsLeft[i] = player.canSplit;
+                playerIds[i] = player.id;
+                playersCards[i] = Collections.unmodifiableList(player.cards);
+                playersSoftScore[i] = state.getSoftScore(playersCards[i]);
+                playersHardScore[i] = state.getHardScore(playersCards[i]);
+                if (playersSoftScore[i] == state.BLACKJACK_SCORE && player.cards.size() == 2) {
+                    if (i == state.playerIndex) {
+                        advancePlayer(state);
+                        playerIndex = state.playerIndex;
+                    }
+                    playerBlackjackStatus[i] = true;
+                    player.isDone = true;
+                    if (dealerBlackjack) {
+                        playerWinMultiplier[i] = 1;
+                    } else {
+                        playerWinMultiplier[i] = 2.5;
+                    }
+                }
+                if (state.playerIndex == numPlayers) {
+                    // Game is finished. Calculate winnings.
+                    if (playersSoftScore[i] < 22 && playersSoftScore[i] > dealerScore) {
+                        if (playerWinMultiplier[i] < 1) {
+                            playerWinMultiplier[i] = 2;
+                        }
+                    } else if (playersHardScore[i] < 22 && playersHardScore[i] > dealerScore) {
+                        if (playerWinMultiplier[i] < 1) {
+                            playerWinMultiplier[i] = 2;
+                        }
+                    } else if (dealerScore > 21 && playersHardScore[i] < 22) {
+                        if (playerWinMultiplier[i] < 1) {
+                            playerWinMultiplier[i] = 2;
+                        }
+                    } else if (playersSoftScore[i] < 22 && playersSoftScore[i] == dealerScore) {
+                        if (playerWinMultiplier[i] < 1) {
+                            playerWinMultiplier[i] = 1;
+                        }
+                    } else if (playersHardScore[i] < 22 && playersHardScore[i] == dealerScore) {
+                        if (playerWinMultiplier[i] < 1) {
+                            playerWinMultiplier[i] = 1;
+                        }
+                    } else {
+                        playerWinMultiplier[i] = 0;
+                    }
+                }
+            }
+            this.state = state;
+        }
+
+        @Override
+        public String toString() {
+            boolean showWinnings = playerIndex == state.numberOfPlayers;
+            StringBuilder playerCards = new StringBuilder();
+            for (int i = 0; i < playersCards.length; ++i) {
+                playerCards.append("Player " + i + " cards: " + Arrays.toString(playersCards[i].toArray()) + ": ");
+                if (playerBlackjackStatus[i]) {
+                    playerCards.append("Black Jack");
+                } else if (playersSoftScore[i] != playersHardScore[i]) {
+                    playerCards.append("(" + playersHardScore[i] + ", " + playersSoftScore[i] + ")");
+                } else {
+                    playerCards.append(playersSoftScore[i]);
+                }
+                if (showWinnings) {
+                    playerCards.append(", Win multiplier: " + playerWinMultiplier[i]);
+                    playerCards.append(", bet is: " + state.playerBets[i]);
+                }
+                playerCards.append('\n');
+            }
+            String result = "Dealer cards: " + Arrays.toString(dealerVisibleCards.toArray()) + ": " +
+                    (dealerBlackjack ? "Black Jack" : dealerScore) + "\n" +
+                    playerCards + "\n";
+            if (playerIndex < playersCards.length) {
+                result += "Player " + playerIndex + " turn: ";
+            } else {
+                result += "Game finished.";
+            }
+            return result;
+        }
+    }
 }

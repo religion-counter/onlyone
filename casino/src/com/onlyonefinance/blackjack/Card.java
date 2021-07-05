@@ -7,8 +7,8 @@ public class Card {
 
     static Map<Type, Integer> VALUES = new HashMap<>();
 
-    final Type type;
-    final Kind kind;
+    public final Type type;
+    public final Kind kind;
 
     Card(Type type, Kind kind) {
         this.type = type;
@@ -31,7 +31,7 @@ public class Card {
         VALUES.put(Type.KING, 10);
     }
 
-    enum Type {
+    public enum Type {
         ACE,
         TWO,
         THREE,
@@ -67,7 +67,7 @@ public class Card {
         }
     }
 
-    enum Kind {
+    public enum Kind {
         CLUBS,
         DIAMONDS,
         HEARTS,
@@ -88,5 +88,10 @@ public class Card {
                     throw new RuntimeException("Invalid kind: " + this);
             }
         }
+    }
+
+    @Override
+    public String toString() {
+        return type.toString() + kind;
     }
 }
