@@ -27,7 +27,7 @@ public class CardRandomnessTest {
             for (int i = 0; i < numberOfPlayers; ++i) {
                 bets[i] = RandomGenerator.secureRandom.nextDouble() * 100;
             }
-            GameState gameState = new GameState(numberOfPlayers, bets);
+            GameState gameState = new GameState(numberOfPlayers, bets, RandomGenerator.secureRandom);
             for (int c = 0; c < numberOfCardsToDrawEachTest; ++c) {
                 Card card = gameState.getRandomCard();
                 statistics.put(card.type, statistics.get(card.type) + 1);

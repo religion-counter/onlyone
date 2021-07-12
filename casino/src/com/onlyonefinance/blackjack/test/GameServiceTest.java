@@ -1,6 +1,7 @@
 package com.onlyonefinance.blackjack.test;
 
 import com.onlyonefinance.blackjack.GameService;
+import com.onlyonefinance.blackjack.RandomGenerator;
 
 import java.util.Scanner;
 
@@ -15,7 +16,7 @@ public class GameServiceTest {
             System.out.println("New Game");
             GameService gameService = new GameService();
 
-            GameService.UserVisibleState state = gameService.startGame(numberOfPlayers, new double[] {1,2,3});
+            GameService.UserVisibleState state = gameService.startGame(numberOfPlayers, new double[] {1,2,3}, RandomGenerator.secureRandom);
 
             while (state.playerIndex < state.playersCards.length) {
                 System.out.print(state + "(h) - Hit, (s) - Stay, (d) - Double, (sp) - Split: ");
@@ -48,4 +49,7 @@ public class GameServiceTest {
 
 
     // TODO Add unit tests for GameService and verify all corner cases - 2 splits, doubles, hits, stays, dealer, player BJs, and others
+
+    // TEST SPLIT On 2 ACES
+    // Test BlackJack Dealer and Player
 }

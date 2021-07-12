@@ -25,7 +25,7 @@ public class GameController {
             throw new RuntimeException("Already active game for client" + clientId + ". Game id is: " + oldGameId);
         }
 
-        GameService.UserVisibleState state = gameService.startGame(numberOfPlayers, playerBets);
+        GameService.UserVisibleState state = gameService.startGame(numberOfPlayers, playerBets, RandomGenerator.secureRandom);
         activeGameForClient.put(clientId, state.gameId);
         games.put(state.gameId, state);
 
@@ -69,6 +69,8 @@ public class GameController {
             gameState = gameService.playerStay(gameState, playerIndex);
         } else if (availableAction.action == Action.SPLIT) {
             gameState = gameService.playerSplit(gameState, playerIndex);
+        } else if (availableAction.action == Action.SURRENDER) {
+            gameState = gameService.playerSurrender(gameState, playerIndex);
         }
 
         games.put(gameId, gameState);
@@ -104,6 +106,9 @@ public class GameController {
         result.availableActions.add(newAction(playerId, playerIndex, Action.STAY));
         if (result.playersCards[playerIndex].size() == 2) {
             result.availableActions.add(newAction(playerId, playerIndex, Action.DOUBLE));
+            if (result.playersSoftScore[playerIndex] != 21) {
+                result.availableActions.add(newAction(playerId, playerIndex, Action.SURRENDER));
+            }
             if (result.playersCards[playerIndex].get(0).type == result.playersCards[playerIndex].get(1).type) {
                 if (userVisibleState.splitsLeft[playerIndex] > 0) {
                     result.availableActions.add(newAction(playerId, playerIndex, Action.SPLIT));

@@ -12,6 +12,7 @@ public class Player {
     boolean hasBlackjack = false;
     boolean canHit = false;
     boolean canDouble = false;
+    boolean surrendered = false;
     int canSplit = 2;
     boolean canSurrender = false; // TODO implement
     boolean canInsurance = false; // TODO implement

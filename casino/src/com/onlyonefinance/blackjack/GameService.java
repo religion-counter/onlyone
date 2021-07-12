@@ -1,5 +1,6 @@
 package com.onlyonefinance.blackjack;
 
+import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -11,11 +12,11 @@ public class GameService {
 
     public final static int MAX_NUMBER_OF_PLAYERS = 8;
 
-    public UserVisibleState startGame(int numberOfPlayers, double[] playerBets) {
+    public UserVisibleState startGame(int numberOfPlayers, double[] playerBets, SecureRandom randomGenerator) {
         if (numberOfPlayers < 1 || numberOfPlayers > MAX_NUMBER_OF_PLAYERS) {
             throw new RuntimeException("Invalid number of players for one game: " + numberOfPlayers);
         }
-        final GameState res = new GameState(numberOfPlayers, playerBets);
+        final GameState res = new GameState(numberOfPlayers, playerBets, randomGenerator);
 
         if (res.dealerBlackjack) {
             res.playerIndex = res.players.size();
@@ -44,6 +45,10 @@ public class GameService {
 
         GameState state = ustate.state;
 
+        if (state.playerIndex == state.numberOfPlayers) {
+            throw new RuntimeException("Game is already finished.");
+        }
+
         Player player = state.players.get(playerIndex);
 
         if (player.isDone) {
@@ -69,6 +74,11 @@ public class GameService {
     public UserVisibleState playerDouble(UserVisibleState ustate, int playerIndex) {
 
         GameState state = ustate.state;
+
+        if (state.playerIndex == state.numberOfPlayers) {
+            throw new RuntimeException("Game is already finished.");
+        }
+
         state.playerBets[playerIndex] *= 2;
 
         Player player = state.players.get(playerIndex);
@@ -91,6 +101,10 @@ public class GameService {
     public UserVisibleState playerSplit(UserVisibleState ustate, int playerIndex) {
 
         GameState state = ustate.state;
+
+        if (state.playerIndex == state.numberOfPlayers) {
+            throw new RuntimeException("Game is already finished.");
+        }
 
         Player player = state.players.get(playerIndex);
 
@@ -128,27 +142,55 @@ public class GameService {
         player.cards.add(state.getRandomCard());
         newPlayer.cards.add(cardForNewPlayer);
         newPlayer.cards.add(state.getRandomCard());
+        state.numberOfPlayers += 1;
+        state.players.add(playerIndex + 1, newPlayer);
         if (cardForNewPlayer.type == Card.Type.ACE) {
+            advancePlayer(state);
+            advancePlayer(state);
             player.isDone = true;
             newPlayer.isDone = true;
-            advancePlayer(state);
-            advancePlayer(state);
         }
-        if (state.getSoftScore(player.cards) == state.BLACKJACK_SCORE) {
-            player.hasBlackjack = true;
-        }
-        if (state.getSoftScore(newPlayer.cards) == state.BLACKJACK_SCORE) {
-            newPlayer.hasBlackjack = true;
-        }
-        state.players.add(playerIndex + 1, newPlayer);
-        state.numberOfPlayers += 1;
 
+        return new UserVisibleState(state);
+    }
+
+    public UserVisibleState playerSurrender(UserVisibleState ustate, int playerIndex) {
+
+        GameState state = ustate.state;
+
+        if (state.playerIndex == state.numberOfPlayers) {
+            throw new RuntimeException("Game is already finished.");
+        }
+
+        if (state.playerIndex != playerIndex) {
+            throw new RuntimeException("Player is not on turn. Expected player: " + state.playerIndex + ", Player received: " + playerIndex);
+        }
+        Player player = state.players.get(playerIndex);
+        if (player.isDone) {
+            throw new RuntimeException("Player " + playerIndex + " is done.");
+        }
+        if (player.hasBlackjack) {
+            throw new RuntimeException("Player can surrender only if he doesn't have blackjack.");
+        }
+
+        if (player.cards.size() > 2) {
+            throw new RuntimeException("Player can surrender only before drawing any cards.");
+        }
+        player.surrendered = true;
+        player.isDone = true;
+
+
+        advancePlayer(state);
         return new UserVisibleState(state);
     }
 
     public UserVisibleState playerStay(UserVisibleState ustate, int playerIndex) {
 
         GameState state = ustate.state;
+
+        if (state.playerIndex == state.numberOfPlayers) {
+            throw new RuntimeException("Game is already finished.");
+        }
 
         if (state.playerIndex != playerIndex) {
             throw new RuntimeException("Not expected stay because player is not on turn.");
@@ -192,7 +234,11 @@ public class GameService {
                 } else {
                     dealerScore = dealerSoftScore;
                 }
-                dealerBlackjack = false;
+                if (dealerSoftScore == 21 && dealerCards.size() == 2) {
+                    dealerBlackjack = true;
+                } else {
+                    dealerBlackjack = false;
+                }
             } else if (state.dealerBlackjack) {
                 dealerVisibleCards = Collections.unmodifiableList(dealerCards);
                 dealerScore = state.BLACKJACK_SCORE;
@@ -230,7 +276,12 @@ public class GameService {
                     if (dealerBlackjack) {
                         playerWinMultiplier[i] = 1;
                     } else {
-                        playerWinMultiplier[i] = 2.5;
+                        if (player.canSplit == 2) {
+                            playerWinMultiplier[i] = 2.5;
+                        } else {
+                            playerBlackjackStatus[i] = false;
+                            playerWinMultiplier[i] = 2;
+                        }
                     }
                 }
                 if (state.playerIndex == numPlayers) {
@@ -258,6 +309,9 @@ public class GameService {
                     } else {
                         playerWinMultiplier[i] = 0;
                     }
+                }
+                if (playersHardScore[i] < 22 && player.surrendered) {
+                    playerWinMultiplier[i] = 0.5;
                 }
             }
             this.state = state;
@@ -288,7 +342,7 @@ public class GameService {
             if (playerIndex < playersCards.length) {
                 result += "Player " + playerIndex + " turn: ";
             } else {
-                result += "Game finished.";
+                result += "========================================";
             }
             return result;
         }

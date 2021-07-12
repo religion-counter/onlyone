@@ -1,5 +1,6 @@
 package com.onlyonefinance.blackjack;
 
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -17,6 +18,7 @@ public class GameState {
     int playerIndex;
     int numberOfPlayers;
     double[] playerBets;
+    final SecureRandom randomGenerator;
 
     final List<Card> cardsForDraw = new ArrayList<>();
 
@@ -34,13 +36,14 @@ public class GameState {
         if (cardsForDraw.isEmpty()) {
             throw new RuntimeException("Deck is empty.");
         }
-        final int cardIndex = RandomGenerator.secureRandom.nextInt(cardsForDraw.size());
+        final int cardIndex = this.randomGenerator.nextInt(cardsForDraw.size());
         Card result = cardsForDraw.get(cardIndex);
         cardsForDraw.remove(cardIndex);
         return result;
     }
 
-    public GameState(final int numberOfPlayers, double[] playerBets) {
+    public GameState(final int numberOfPlayers, double[] playerBets, SecureRandom randomGenerator) {
+        this.randomGenerator = randomGenerator;
         this.playerBets = playerBets;
         gameId = UUID.randomUUID().toString();
         players = new ArrayList<>();
