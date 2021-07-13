@@ -2,6 +2,7 @@ package com.onlyonefinance.blackjack.test;
 
 import com.onlyonefinance.blackjack.GameService;
 
+import java.lang.reflect.Method;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,13 +10,17 @@ import java.util.List;
 
 public class GameServiceUnitTests {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         GameServiceUnitTests tests = new GameServiceUnitTests();
 
-        tests.testSplit2Aces2More();
-        tests.testSplit2Aces2BJs();
-        tests.testSplit2AcesAgainstBJ();
-        tests.testNaturals();
+        final Method[] declaredTests = GameServiceUnitTests.class.getDeclaredMethods();
+
+        for (Method test : declaredTests) {
+            if (test.getName().contains("main")) {
+                continue;
+            }
+            test.invoke(tests);
+        }
     }
 
     public void testSplit2Aces2More() {
