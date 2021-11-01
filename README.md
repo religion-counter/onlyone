@@ -1,8 +1,8 @@
-**OnlyOne Finance** is a community driven fairly launched token on the Binance Smart Chain (BSC) and the utility token for the OnlyOne Casino. OnlyOne Finance is currently developing the OnlyOne Casino, a decentralized open-source casino where users will be able to bet ONLYONE, BUSD, BNB and more.
+**Onlyone Finance** is a community driven fairly launched token on the Binance Smart Chain (BSC) and the utility token for the Onlyone Casino. Onlyone Finance is currently developing the Onlyone Casino, a decentralized open-source casino where users will be able to bet ONLYONE, BUSD, BNB and more.
 
-On June 5th, 2021 OnlyOne created and fairly launched the ONLYONE token, then burned 50% of the OnlyOne. The other half token was sent to the Pancake Swap liquidity pool. Then OnlyOne took another drastic step and burned the liquidity pool (LP) token in order to guarantee liquidity forever.
+On June 5th, 2021 Onlyone created and fairly launched the ONLYONE token, then burned 50% of the Onlyone. The other half token was sent to the Pancake Swap liquidity pool. Then Onlyone took another drastic step and burned the liquidity pool (LP) token in order to guarantee liquidity forever.
 
-OnlyOne Finance is the first of its kind in the trending cryptoverse. The platform will incorporate the crypto community allowing them to participate in Casino Action like never before.
+Onlyone Finance is the first of its kind in the trending cryptoverse. The platform will incorporate the crypto community allowing them to participate in Casino Action like never before.
 
 TOKENOMICS
 
