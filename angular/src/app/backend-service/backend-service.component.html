@@ -1,0 +1,27 @@
+<h2>Backend service</h2>
+<div>{{value}}</div>
+<div>address: {{address}}</div>
+<div>message: {{message}}</div>
+<div>
+    <span>
+        <button
+            [disabled]="showBalanceSpinner"
+            (click)="getBalance()">Get Balance</button>
+        <mat-spinner *ngIf="showBalanceSpinner"></mat-spinner>
+    </span>
+    <div>Balance: {{balance}}</div>
+</div>
+
+<div>
+<mat-form-field >
+    <mat-label>Amount to withdraw</mat-label>
+    <input matInput type="text" [(ngModel)]="amountToWithdraw">
+  </mat-form-field>
+  <button (click)="withdraw()">Withdraw</button>
+</div>
+<div>
+    Withdraw tax is: {{withdrawTax}}
+</div>
+<div> 
+    Withdraw transaction hash: {{withdrawTransactionHash}}
+</div>

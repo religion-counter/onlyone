@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context>
+<!--  <Resource name="jdbc/database"-->
+<!--            auth="Container"-->
+<!--            type="javax.sql.DataSource"-->
+<!--            driverClassName="org.sqlite.JDBC"-->
+<!--            url="jdbc:sqlite:database.db"-->
+<!--            factory="org.apache.tomcat.dbcp.dbcp.BasicDataSourceFactory">-->
+<!--  </Resource>-->
+</Context>
