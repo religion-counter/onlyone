@@ -1,7 +1,6 @@
 package mypackage;
 
 import java.security.SecureRandom;
-import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class MessageGenerator {
@@ -14,7 +13,7 @@ public class MessageGenerator {
 
     private final ConcurrentHashMap<String, Message> messages = new ConcurrentHashMap<>();
 
-    public synchronized Message getMessage(String wallet, boolean generate) {
+    public Message getMessage(String wallet, boolean generate) {
         if (!generate) {
             if (messages.containsKey(wallet)) {
                 return messages.get(wallet);

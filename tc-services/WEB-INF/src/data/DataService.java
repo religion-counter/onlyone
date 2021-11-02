@@ -13,7 +13,7 @@ public class DataService {
         _databaseService.addAccount(account);
     }
 
-    public synchronized boolean updateAccount(Account account) {
+    public boolean updateAccount(Account account) {
         return _databaseService.updateAccount(account);
     }
 }

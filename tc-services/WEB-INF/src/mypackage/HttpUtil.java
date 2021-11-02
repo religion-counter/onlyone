@@ -11,15 +11,16 @@ public class HttpUtil {
     public static String WALLET_HEADER = "WALLET";
     public static String SIGNATURE_HEADER = "SIGNATURE";
     public static String AMOUNT_HEADER = "AMOUNT";
+    public static String TOKEN_HEADER = "TOKEN";
 
     public static String ONLYONE_COOKIE = "onlyonecookie";
 
-    public synchronized static void postResponse(HttpServletResponse resp, String data) throws IOException {
+    public static void postResponse(HttpServletResponse resp, String data) throws IOException {
         PrintWriter writer = resp.getWriter();
         writer.print("{\"data\": \"" + data + "\"}");
     }
 
-    public synchronized static String getCookie(HttpServletRequest req, String cookieValueToMatch) {
+    public static String getCookie(HttpServletRequest req, String cookieValueToMatch) {
         Cookie[] cookies = req.getCookies();
         if (cookies == null) {
             return null;

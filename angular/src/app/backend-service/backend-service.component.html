@@ -1,23 +1,28 @@
-<h2>Backend service</h2>
-<div>{{value}}</div>
-<div>address: {{address}}</div>
-<div>message: {{message}}</div>
+<h2>Account page</h2>
+<mat-spinner class="spinner" *ngIf="showLoadingSpinner"></mat-spinner>
+<div>Hello: {{address}}</div>
+<div>Casino balance: {{balance}} BNB</div>
+<div>If you want to increase your casino balance, please send BNB to this address: {{depositAddress}}</div>
+<div>After sending BNB to the deposit address wait a couple of minutes and click the "Refresh Balance" button 
+    to see your new casino balance.
+</div>
 <div>
     <span>
         <button
-            [disabled]="showBalanceSpinner"
-            (click)="getBalance()">Get Balance</button>
-        <mat-spinner *ngIf="showBalanceSpinner"></mat-spinner>
+            [disabled]="showLoadingSpinner"
+            (click)="getBalance()">Refresh Balance</button>
     </span>
-    <div>Balance: {{balance}}</div>
 </div>
-
+<div>If you want to withdaw from the casino balance use the following input:</div>
 <div>
 <mat-form-field >
     <mat-label>Amount to withdraw</mat-label>
-    <input matInput type="text" [(ngModel)]="amountToWithdraw">
+    <input matInput 
+        type="number" step="0.005"
+        type="text" [(ngModel)]="amountToWithdraw">
   </mat-form-field>
-  <button (click)="withdraw()">Withdraw</button>
+  <button (click)="withdraw()"
+    [disabled]="showLoadingSpinner">Withdraw</button>
 </div>
 <div>
     Withdraw tax is: {{withdrawTax}}

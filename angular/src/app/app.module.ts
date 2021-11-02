@@ -19,6 +19,8 @@ import { BackendServiceComponent } from './backend-service/backend-service.compo
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { AuthGuardService } from './auth/auth-guard.service';
+import { LoginComponent } from './login/login.component';
 
 
 @NgModule({
@@ -46,6 +48,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     MessagesComponent,
     HeroSearchComponent,
     BackendServiceComponent,
+    LoginComponent,
   ],
   bootstrap: [ AppComponent ]
 })
