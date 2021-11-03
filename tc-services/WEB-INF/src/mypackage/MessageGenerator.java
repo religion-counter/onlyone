@@ -54,23 +54,23 @@ public class MessageGenerator {
         }
     }
 
-    public boolean isSignatureValid(
+    public boolean isSignatureInvalid(
             String walletAddress,
             String signature
     ) {
         if (walletAddress == null) {
-            return false;
+            return true;
         }
 
         MessageGenerator.Message messageForSign = getMessage(walletAddress, false);
 
         if (messageForSign == null) {
-            return false;
+            return true;
         }
 
         if (System.currentTimeMillis() - messageForSign.timeWhenMessageIsGenerated >
                 TimeUnit.MINUTES.toMillis(5)) {
-            return false;
+            return true;
         }
 
         String prefix = PERSONAL_MESSAGE_PREFIX + messageForSign.message.length();
@@ -100,7 +100,7 @@ public class MessageGenerator {
                     addressRecovered = "0x" + Keys.getAddress(publicKey);
 
                     if (addressRecovered.equalsIgnoreCase(walletAddress)) {
-                        return true;
+                        return false;
                     }
                 }
             }
@@ -108,7 +108,7 @@ public class MessageGenerator {
             LOG.log(Level.SEVERE, "Exception while validating signature: ", t);
             t.printStackTrace();
         }
-        return false;
+        return true;
     }
 
 }

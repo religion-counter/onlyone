@@ -4,28 +4,17 @@ import data.Account;
 import data.DataService;
 import data.DatabaseService;
 import global.BalanceService;
-import global.GlobalApplicationLock;
-import org.web3j.crypto.ECDSASignature;
-import org.web3j.crypto.Hash;
-import org.web3j.crypto.Keys;
-import org.web3j.crypto.Sign;
-import org.web3j.utils.Numeric;
+import global.Locks;
 import periodic.PeriodicCollectManager;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 public final class Hello extends HttpServlet {
-
-    // TODO Make LOGIN button and LOGIN goes through the Hello workflow.
 
     private static final Logger LOG = Logger.getLogger(Hello.class.getName());
 
@@ -34,26 +23,25 @@ public final class Hello extends HttpServlet {
     private final PeriodicCollectManager _periodicCollectManager = PeriodicCollectManager.INSTANCE;
     private final BalanceService _balanceService = BalanceService.INSTANCE;
     private final CookieService _cookieService = CookieService.INSTANCE;
+    private final Locks _locks = Locks.INSTANCE;
 
     @Override
-    public void init() throws ServletException {
-        synchronized (GlobalApplicationLock.INSTANCE) {
-            _periodicCollectManager.startPeriodicCollectTask();
-        }
+    public void init() {
+        _periodicCollectManager.startPeriodicCollectTask();
     }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        synchronized (GlobalApplicationLock.INSTANCE) {
-            String walletAddress = req.getHeader(HttpUtil.WALLET_HEADER);
-            if (walletAddress == null) {
-                LOG.info("Received doGet request without wallet. Ignoring.");
-                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                return;
-            }
+        String walletAddress = req.getHeader(HttpUtil.WALLET_HEADER);
+        if (walletAddress == null) {
+            LOG.info("Received doGet request without wallet. Ignoring.");
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            return;
+        }
+        synchronized (_locks.getLockForWallet(walletAddress)) {
             LOG.info("Received doGet request for wallet: " + walletAddress);
             String signature = req.getHeader(HttpUtil.SIGNATURE_HEADER);
-            if (!_messageGenerator.isSignatureValid(walletAddress, signature)) {
+            if (_messageGenerator.isSignatureInvalid(walletAddress, signature)) {
                 LOG.info("Signature of request is not valid. Ignoring");
                 resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 return;

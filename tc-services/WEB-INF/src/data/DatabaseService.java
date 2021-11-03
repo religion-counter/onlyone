@@ -1,6 +1,6 @@
 package data;
 
-import global.GlobalApplicationLock;
+import global.Locks;
 import org.sqlite.SQLiteDataSource;
 
 import java.sql.*;
@@ -14,21 +14,20 @@ public class DatabaseService {
     public static final Logger LOG = Logger.getLogger(DatabaseService.class.getName());
 
     public static final DatabaseService INSTANCE = new DatabaseService();
+    private final Locks _locks = Locks.INSTANCE;
     private Connection _connection;
 
     private DatabaseService() {
-        synchronized (GlobalApplicationLock.INSTANCE) {
-            LOG.info("Initializing DataBase");
-            for (int i = 0; i < 3; ++i) {
-                if (get_connection()) {
-                    return;
-                }
+        LOG.info("Initializing DataBase");
+        for (int i = 0; i < 3; ++i) {
+            if (get_connection()) {
+                return;
             }
         }
     }
 
     public Account getAccount(String walletAddress) {
-        synchronized (GlobalApplicationLock.INSTANCE) {
+        synchronized (_locks.getLockForWallet(walletAddress)) {
             try {
                 PreparedStatement statement = _connection.prepareStatement(Queries.ACCOUNT_BY_WALLET);
                 statement.setString(1, walletAddress);
@@ -54,7 +53,7 @@ public class DatabaseService {
     }
 
     public boolean updateAccount(Account account) {
-        synchronized (GlobalApplicationLock.INSTANCE) {
+        synchronized (_locks.getLockForWallet(account.walletAddress)) {
             try {
                 PreparedStatement statement = _connection.prepareStatement(Queries.UPDATE_ACCOUNT);
                 statement.setString(1, account.depositWalletAddress);
@@ -74,7 +73,7 @@ public class DatabaseService {
     }
 
     public void addAccount(Account account) {
-        synchronized (GlobalApplicationLock.INSTANCE) {
+        synchronized (_locks.getLockForWallet(account.walletAddress)) {
             try {
                 PreparedStatement statement = _connection.prepareStatement(Queries.ADD_ACCOUNT);
                 statement.setString(1, account.walletAddress);
@@ -113,48 +112,45 @@ public class DatabaseService {
     }
 
     public void closeSqlConnection() {
-        synchronized (GlobalApplicationLock.INSTANCE) {
-            try {
-                if (_connection != null) {
-                    _connection.close();
-                }
-            } catch (SQLException e) {
-                LOG.log(Level.SEVERE, "Error closing SQL connection: ", e);
-                // connection close failed.
+        try {
+            if (_connection != null) {
+                _connection.close();
             }
+        } catch (SQLException e) {
+            LOG.log(Level.SEVERE, "Error closing SQL connection: ", e);
+            // connection close failed.
         }
     }
 
     public List<Account> getAllAccounts() {
-        synchronized (GlobalApplicationLock.INSTANCE) {
-            ArrayList<Account> result = new ArrayList<>();
-            try {
-                StringBuilder res = new StringBuilder("Printing all accounts on startup:");
-                ResultSet rs = _connection.prepareStatement(Queries.ALL_ACCOUNTS).executeQuery();
-                while (rs.next()) {
-                    String walletAddress = rs.getString(Queries.WALLET_ADDRESS_COL);
-                    String depositWalletAddress = rs.getString(Queries.DEPOSIT_ADDRESS_COL);
-                    String depositPk = rs.getString(Queries.DEPOSIT_ADDRESS_PK_COL);
-                    String bnbBalance = rs.getString(Queries.BNB_BALANCE_COL);
-                    String depositWalletBnbBalance = rs.getString(Queries.DEPOSIT_BNB_BALANCE_COL);
-                    Account account = new Account(
-                            walletAddress, depositWalletAddress, depositPk,
-                            Double.parseDouble(bnbBalance),
-                            Double.parseDouble(depositWalletBnbBalance)
-                    );
-                    result.add(account);
-                    res.append("Address: ").append(walletAddress).append('\n')
-                            .append("Deposit address: ").append(depositWalletAddress).append('\n')
-                            .append("Deposit PK: ").append("CENSORED").append('\n')
-                            .append("BNB balance: ").append(bnbBalance).append('\n')
-                            .append("Deposit BNB Balance: ").append(depositWalletBnbBalance).append('\n')
-                            .append('\n');
-                }
-                return result;
-            } catch (Exception e) {
-                e.printStackTrace();
+        ArrayList<Account> result = new ArrayList<>();
+        try {
+            StringBuilder res = new StringBuilder("Printing all accounts on startup:");
+            ResultSet rs = _connection.prepareStatement(Queries.ALL_ACCOUNTS).executeQuery();
+            while (rs.next()) {
+                String walletAddress = rs.getString(Queries.WALLET_ADDRESS_COL);
+                String depositWalletAddress = rs.getString(Queries.DEPOSIT_ADDRESS_COL);
+                String depositPk = rs.getString(Queries.DEPOSIT_ADDRESS_PK_COL);
+                String bnbBalance = rs.getString(Queries.BNB_BALANCE_COL);
+                String depositWalletBnbBalance = rs.getString(Queries.DEPOSIT_BNB_BALANCE_COL);
+                Account account = new Account(
+                        walletAddress, depositWalletAddress, depositPk,
+                        Double.parseDouble(bnbBalance),
+                        Double.parseDouble(depositWalletBnbBalance)
+                );
+                result.add(account);
+                res.append("Address: ").append(walletAddress).append('\n')
+                        .append("Deposit address: ").append(depositWalletAddress).append('\n')
+                        .append("Deposit PK: ").append("CENSORED").append('\n')
+                        .append("BNB balance: ").append(bnbBalance).append('\n')
+                        .append("Deposit BNB Balance: ").append(depositWalletBnbBalance).append('\n')
+                        .append('\n');
             }
-            return null;
+            LOG.info(res.toString());
+            return result;
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+        return null;
     }
 }

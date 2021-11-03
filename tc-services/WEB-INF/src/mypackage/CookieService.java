@@ -1,6 +1,6 @@
 package mypackage;
 
-import global.GlobalApplicationLock;
+import global.Locks;
 
 import javax.servlet.http.HttpServletRequest;
 import java.security.SecureRandom;
@@ -13,7 +13,9 @@ public class CookieService {
 
     public static final CookieService INSTANCE = new CookieService();
 
-    private SecureRandom random = new SecureRandom();
+    private final Locks _locks = Locks.INSTANCE;
+
+    private final SecureRandom random = new SecureRandom();
 
     private CookieService() {}
 
@@ -21,7 +23,7 @@ public class CookieService {
     private final ConcurrentHashMap<String, String> tokensForWallet = new ConcurrentHashMap<>();
 
     public String getCookieForWallet(String wallet) {
-        synchronized (GlobalApplicationLock.INSTANCE) {
+        synchronized (_locks.getLockForWallet(wallet)) {
             if (cookieToWallet.containsKey(wallet)) {
                 return cookieToWallet.get(wallet);
             }
@@ -30,7 +32,7 @@ public class CookieService {
     }
 
     public String getTokenForWallet(String wallet) {
-        synchronized (GlobalApplicationLock.INSTANCE) {
+        synchronized (_locks.getLockForWallet(wallet)) {
             if (tokensForWallet.containsKey(wallet)) {
                 return tokensForWallet.get(wallet);
             }
@@ -39,7 +41,7 @@ public class CookieService {
     }
 
     public String generateNewTokenForWallet(String wallet) {
-        synchronized (GlobalApplicationLock.INSTANCE) {
+        synchronized (_locks.getLockForWallet(wallet)) {
             StringBuilder token = new StringBuilder();
             for (int i = 0; i < 24; ++i) {
                 token.append((char) ('a' + random.nextInt(25)));
@@ -52,7 +54,7 @@ public class CookieService {
     }
 
     public String generateNewCookieForWallet(String wallet) {
-        synchronized (GlobalApplicationLock.INSTANCE) {
+        synchronized (_locks.getLockForWallet(wallet)) {
             StringBuilder cookie = new StringBuilder();
             for (int i = 0; i < 26; ++i) {
                 cookie.append((char) ('a' + random.nextInt(25)));
@@ -65,47 +67,48 @@ public class CookieService {
         }
     }
 
-    public boolean isRequestAuthenticated(HttpServletRequest req) {
-        synchronized (GlobalApplicationLock.INSTANCE) {
-            if (req == null) return false;
-            String walletAddress = req.getHeader(HttpUtil.WALLET_HEADER);
-            if (walletAddress == null) {
-                LOG.info("Request is without a wallet in the header.");
-                return false;
-            }
-
+    public boolean isRequestUnauthenticated(HttpServletRequest req) {
+        if (req == null) {
+            return true;
+        }
+        String walletAddress = req.getHeader(HttpUtil.WALLET_HEADER);
+        if (walletAddress == null) {
+            LOG.info("Request is without a wallet in the header.");
+            return true;
+        }
+        synchronized (_locks.getLockForWallet(walletAddress)) {
             String tokenFromReq = req.getHeader(HttpUtil.TOKEN_HEADER);
             if (tokenFromReq == null) {
                 LOG.info("Token header is missing.");
-                return false;
+                return true;
             }
             String requiredToken = getTokenForWallet(walletAddress);
             if (requiredToken == null) {
                 LOG.info("Token for wallet is missing.");
-                return false;
+                return true;
             }
             if (!tokenFromReq.equals(requiredToken)) {
                 LOG.info("Token from request doesn't match required token. " +
                         "Token from request: " + tokenFromReq +
                         ". Token for wallet: " + requiredToken);
-                return false;
+                return true;
             }
             String requiredCookie = getCookieForWallet(walletAddress);
             if (requiredCookie == null) {
                 LOG.info("Cookie for wallet is not set. Need to log in (Hello) first.");
-                return false;
+                return true;
             }
             String cookieFromReq = HttpUtil.getCookie(req, requiredCookie);
             if (cookieFromReq == null) {
                 LOG.info("Cookie from request is null.");
-                return false;
+                return true;
             }
             if (cookieFromReq.equals(requiredCookie)) {
                 LOG.info("Request is authenticated: ");
-                return true;
+                return false;
             }
             LOG.info("Cookies doesn't match. Required: " + requiredCookie + ", Received: " + cookieFromReq);
-            return false;
+            return true;
         }
     }
 

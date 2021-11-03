@@ -1,12 +1,10 @@
 package mypackage;
 
 import data.Account;
-import data.DataService;
 import data.DatabaseService;
 import global.WalletUtil;
 import org.web3j.crypto.Credentials;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -28,7 +26,7 @@ public class AdminServlet extends HttpServlet {
 
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         // Check for admin access ( master wallet )
 
         String walletAddress = req.getHeader(HttpUtil.WALLET_HEADER);
@@ -39,7 +37,7 @@ public class AdminServlet extends HttpServlet {
         }
         LOG.info("Received doGet request for wallet: " + walletAddress);
         String signature = req.getHeader(HttpUtil.SIGNATURE_HEADER);
-        if (!_messageGenerator.isSignatureValid(walletAddress, signature)) {
+        if (_messageGenerator.isSignatureInvalid(walletAddress, signature)) {
             LOG.info("Signature of request is not valid. Ignoring");
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             return;
@@ -47,7 +45,7 @@ public class AdminServlet extends HttpServlet {
 
         Credentials masterWallet = WalletUtil.getMasterWallet();
 
-        if (!walletAddress.equalsIgnoreCase(masterWallet.getAddress())) {
+        if (masterWallet == null || !walletAddress.equalsIgnoreCase(masterWallet.getAddress())) {
             LOG.info("Admin page is only for master wallet...");
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             return;

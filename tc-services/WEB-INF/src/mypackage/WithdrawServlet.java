@@ -3,16 +3,13 @@ package mypackage;
 import data.Account;
 import data.DataService;
 import global.Constants;
-import global.GlobalApplicationLock;
+import global.Locks;
 import global.WalletUtil;
 import org.web3j.crypto.Credentials;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -24,17 +21,18 @@ public class WithdrawServlet extends HttpServlet {
     private final Web3Service _web3service = Web3Service.INSTANCE;
     private final CookieService _cookieService = CookieService.INSTANCE;
     private final DataService _dataservice = DataService.INSTANCE;
+    private final Locks _locks = Locks.INSTANCE;
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        synchronized (GlobalApplicationLock.INSTANCE) {
-            String wallet = req.getHeader(HttpUtil.WALLET_HEADER);
-            if (wallet == null) {
-                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                LOG.log(Level.SEVERE, "Empty wallet header");
-                return;
-            }
-            if (!_cookieService.isRequestAuthenticated(req)) {
+        String wallet = req.getHeader(HttpUtil.WALLET_HEADER);
+        if (wallet == null) {
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            LOG.log(Level.SEVERE, "Empty wallet header");
+            return;
+        }
+        synchronized (_locks.getLockForWallet(wallet)) {
+            if (_cookieService.isRequestUnauthenticated(req)) {
                 LOG.info("Request is not authenticated");
                 resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 return;

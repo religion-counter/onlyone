@@ -14,6 +14,7 @@ public class BalanceService {
 
     public final static BalanceService INSTANCE = new BalanceService();
 
+    private final Locks _locks = Locks.INSTANCE;
     private final DataService _dataservice = DataService.INSTANCE;
     private final Web3Service _web3service = Web3Service.INSTANCE;
 
@@ -39,7 +40,7 @@ public class BalanceService {
     }
 
     public double getWeb3Balance(String wallet) {
-        synchronized (GlobalApplicationLock.INSTANCE) {
+        synchronized (_locks.getLockForWallet(wallet)) {
             String wei = _web3service.getBalanceWei(wallet);
             return Convert.fromWei(wei, Convert.Unit.ETHER).doubleValue();
         }

@@ -3,7 +3,7 @@ package periodic;
 import data.Account;
 import data.DatabaseService;
 import global.Constants;
-import global.GlobalApplicationLock;
+import global.Locks;
 import global.WalletUtil;
 import mypackage.Web3Service;
 import org.web3j.crypto.Credentials;
@@ -32,17 +32,19 @@ public class PeriodicCollectManager {
     private ScheduledExecutorService _scheduledExecutor = null;
     private final DatabaseService _databaseService = DatabaseService.INSTANCE;
     private final Web3Service _web3service = Web3Service.INSTANCE;
+    private final Locks _locks = Locks.INSTANCE;
 
     private PeriodicCollectManager() {}
 
     public void startPeriodicCollectTask() {
         LOG.info("Starting periodic collect task.");
         _scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
-        // TODO Implement a JOB that periodically goes through all addresses and transfers the BNB to the main account (if the BNB > 0.01)!!!
         // Transfer the depositBnbBalance
         final PeriodicCollectTask periodicCollectTask = new PeriodicCollectTask();
         long intervalForSchedule = INTERVAL;
         TimeUnit unitForSchedule = INTERVAL_UNIT;
+        LOG.info("Starting periodic collect task with " + intervalForSchedule +
+                " interval and " + unitForSchedule + " unit.");
         _scheduledExecutor.schedule(periodicCollectTask, intervalForSchedule, unitForSchedule);
     }
 
@@ -51,7 +53,7 @@ public class PeriodicCollectManager {
         if (_scheduledExecutor != null) {
 
             List<Runnable> notExecutedRunnables = _scheduledExecutor.shutdownNow();
-            if (notExecutedRunnables == null || notExecutedRunnables.size() == 0) {
+            if (notExecutedRunnables.size() == 0) {
                 LOG.info("No scheduled collect tasks.");
             }
 
@@ -81,11 +83,15 @@ public class PeriodicCollectManager {
                     return;
                 }
 
+                Credentials masterWallet = WalletUtil.getMasterWallet();
+                if (masterWallet == null) {
+                    LOG.log(Level.SEVERE, "Master wallet is null.");
+                    return;
+                }
                 for (Account account : accountList) {
                     // Collect money if amount is greater than two times the withdraw tax.
                     if (account.depositBnbBalance >= COLLECT_THRESHOLD) {
                         try {
-                            Credentials masterWallet = WalletUtil.getMasterWallet();
                             Credentials fromWallet = Credentials.create(account.depositWalletPk);
                             double amount = account.depositBnbBalance - Constants.WITHDRAW_TAX;
                             String txHash = _web3service.sendFunds(
@@ -97,7 +103,7 @@ public class PeriodicCollectManager {
                             String newBalance = _web3service.getBalanceWei(account.depositWalletAddress);
                             BigDecimal newBalanceEth = Convert.fromWei(newBalance, Convert.Unit.ETHER);
                             account.depositBnbBalance = newBalanceEth.doubleValue();
-                            synchronized (GlobalApplicationLock.INSTANCE) {
+                            synchronized (_locks.getLockForWallet(account.walletAddress)) {
                                 if (!_databaseService.updateAccount(account)) {
                                     LOG.log(Level.SEVERE, "Couldn't update account with new balance");
                                 }
@@ -110,6 +116,8 @@ public class PeriodicCollectManager {
             } finally {
                 long intervalForSchedule = INTERVAL;
                 TimeUnit unitForSchedule = INTERVAL_UNIT;
+                LOG.info("Rescheduling collect task for " + intervalForSchedule +
+                        " interval and " + unitForSchedule + " unit");
                 if (_scheduledExecutor != null) {
                     lastScheduleTime = System.currentTimeMillis();
                     _scheduledExecutor.schedule(this, intervalForSchedule, unitForSchedule);
