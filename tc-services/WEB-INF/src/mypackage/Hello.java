@@ -3,6 +3,7 @@ package mypackage;
 import data.Account;
 import data.DataService;
 import data.DatabaseService;
+import global.BalanceService;
 import global.GlobalApplicationLock;
 import org.web3j.crypto.ECDSASignature;
 import org.web3j.crypto.Hash;
@@ -28,11 +29,11 @@ public final class Hello extends HttpServlet {
 
     private static final Logger LOG = Logger.getLogger(Hello.class.getName());
 
-    public static final String PERSONAL_MESSAGE_PREFIX = "\u0019Ethereum Signed Message:\n";
-
     private final MessageGenerator _messageGenerator = MessageGenerator.INSTANCE;
     private final DataService _dataservice = DataService.INSTANCE;
     private final PeriodicCollectManager _periodicCollectManager = PeriodicCollectManager.INSTANCE;
+    private final BalanceService _balanceService = BalanceService.INSTANCE;
+    private final CookieService _cookieService = CookieService.INSTANCE;
 
     @Override
     public void init() throws ServletException {
@@ -52,14 +53,14 @@ public final class Hello extends HttpServlet {
             }
             LOG.info("Received doGet request for wallet: " + walletAddress);
             String signature = req.getHeader(HttpUtil.SIGNATURE_HEADER);
-            if (!isSignatureValid(walletAddress, signature)) {
+            if (!_messageGenerator.isSignatureValid(walletAddress, signature)) {
                 LOG.info("Signature of request is not valid. Ignoring");
                 resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 return;
             }
 
             boolean generateNewCookie = true;
-            String existingCookie = CookieService.INSTANCE.getCookieForWallet(walletAddress);
+            String existingCookie = _cookieService.getCookieForWallet(walletAddress);
             String cookie = HttpUtil.getCookie(req, existingCookie);
             if (existingCookie != null && cookie != null) {
                 if (existingCookie.equals(cookie)) {
@@ -88,9 +89,9 @@ public final class Hello extends HttpServlet {
 
             String cookieForSet;
             if (generateNewCookie) {
-                cookieForSet = CookieService.INSTANCE.generateNewCookieForWallet(walletAddress);
+                cookieForSet = _cookieService.generateNewCookieForWallet(walletAddress);
             } else {
-                cookieForSet = CookieService.INSTANCE.getCookieForWallet(walletAddress);
+                cookieForSet = _cookieService.getCookieForWallet(walletAddress);
             }
             Cookie c = new Cookie(HttpUtil.ONLYONE_COOKIE, cookieForSet);
             c.setPath("/");
@@ -98,66 +99,16 @@ public final class Hello extends HttpServlet {
             // c.setSecure(true); TODO SET THESE IN PRODUCTION
             resp.addCookie(c);
             LOG.info("Adding cookie " + c.getName() + ":" + c.getValue() + " to the response.");
-            String oldToken = CookieService.INSTANCE.getTokenForWallet(walletAddress);
+            String oldToken = _cookieService.getTokenForWallet(walletAddress);
             if (oldToken != null) {
                 LOG.info("Replacing token for wallet: " + walletAddress);
             }
-            String token = CookieService.INSTANCE.generateNewTokenForWallet(walletAddress);
+            String token = _cookieService.generateNewTokenForWallet(walletAddress);
+
+            _balanceService.updateBalance(account, resp);
 
             HttpUtil.postResponse(resp, account.depositWalletAddress + ":" + account.bnbBalance + ":" + token);
         }
-    }
-
-    private boolean isSignatureValid(
-            String walletAddress,
-            String signature
-    ) {
-        if (walletAddress == null) {
-            return false;
-        }
-
-        MessageGenerator.Message messageForSign = _messageGenerator.getMessage(walletAddress, false);
-
-        if (System.currentTimeMillis() - messageForSign.timeWhenMessageIsGenerated >
-                TimeUnit.MINUTES.toMillis(5)) {
-            return false;
-        }
-
-        String prefix = PERSONAL_MESSAGE_PREFIX + messageForSign.message.length();
-        byte[] msgHash = Hash.sha3((prefix + messageForSign.message).getBytes());
-
-        byte[] signatureBytes = Numeric.hexStringToByteArray(signature);
-        byte v = signatureBytes[64];
-        if (v < 27) {
-            v += 27;
-        }
-
-        Sign.SignatureData sd = new Sign.SignatureData(
-                v,
-                Arrays.copyOfRange(signatureBytes, 0, 32),
-                Arrays.copyOfRange(signatureBytes, 32, 64));
-
-        String addressRecovered;
-        try {
-            // Iterate for each possible key to recover
-            for (int i = 0; i < 4; i++) {
-                BigInteger publicKey = Sign.recoverFromSignature(
-                        (byte) i,
-                        new ECDSASignature(new BigInteger(1, sd.getR()), new BigInteger(1, sd.getS())),
-                        msgHash);
-
-                if (publicKey != null) {
-                    addressRecovered = "0x" + Keys.getAddress(publicKey);
-
-                    if (addressRecovered.equalsIgnoreCase(walletAddress)) {
-                        return true;
-                    }
-                }
-            }
-        } catch (Throwable t) {
-            t.printStackTrace();
-        }
-        return false;
     }
 
     @Override

@@ -2,6 +2,7 @@ package mypackage;
 
 import data.Account;
 import data.DataService;
+import global.BalanceService;
 import global.GlobalApplicationLock;
 import org.web3j.utils.Convert;
 
@@ -19,6 +20,7 @@ public class BalanceServlet extends HttpServlet {
     private final CookieService _cookieService = CookieService.INSTANCE;
     private final DataService _dataservice = DataService.INSTANCE;
     private final Web3Service _web3service = Web3Service.INSTANCE;
+    private final BalanceService _balanceService = BalanceService.INSTANCE;
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -41,32 +43,8 @@ public class BalanceServlet extends HttpServlet {
                 return;
             }
 
-            double web3DepositBalance = getWeb3Balance(acc.depositWalletAddress);
-            if (web3DepositBalance < acc.depositBnbBalance) {
-                LOG.severe("Web3 balance is less than balance in DB.");
-                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                return;
-            }
-            if (web3DepositBalance > acc.depositBnbBalance) {
-                LOG.info("Adding balance: " + (web3DepositBalance - acc.depositBnbBalance) +
-                        ". Web3 balance: " + web3DepositBalance +
-                        ", Balance in DB: " + acc.depositBnbBalance + ". ");
-                acc.bnbBalance += web3DepositBalance - acc.depositBnbBalance;
-                acc.depositBnbBalance = web3DepositBalance;
-                if (!_dataservice.updateAccount(acc)) {
-                    LOG.severe("Couldn't update account: " + wallet);
-                    resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                    return;
-                }
-            }
+            _balanceService.updateBalance(acc, resp);
             HttpUtil.postResponse(resp, Double.toString(acc.bnbBalance));
-        }
-    }
-
-    public double getWeb3Balance(String wallet) {
-        synchronized (GlobalApplicationLock.INSTANCE) {
-            String wei = _web3service.getBalanceWei(wallet);
-            return Convert.fromWei(wei, Convert.Unit.ETHER).doubleValue();
         }
     }
 }

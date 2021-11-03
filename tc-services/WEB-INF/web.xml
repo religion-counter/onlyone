@@ -50,6 +50,16 @@
         <url-pattern>/withdraw</url-pattern>
     </servlet-mapping>
 
+    <servlet>
+        <servlet-name>AdminServlet</servlet-name>
+        <servlet-class>mypackage.AdminServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>AdminServlet</servlet-name>
+        <url-pattern>/admin</url-pattern>
+    </servlet-mapping>
+
     <resource-ref>
         <description>Database</description>
         <res-ref-name>jdbc/database</res-ref-name>

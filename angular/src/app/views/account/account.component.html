@@ -1,0 +1,47 @@
+<h2>Account page</h2>
+<div>Hello: {{address}}</div>
+<div>Casino balance: {{balance}} BNB</div>
+<div>
+    <mat-form-field>
+        <mat-label>Amount to deposit (up to {{maxDepositAmount}} BNB)</mat-label>
+        <input matInput 
+            type="number" step="0.005" 
+            [max]="maxDepositAmount"
+            min="0"
+            [(ngModel)]="amountToDeposit">
+      </mat-form-field>
+      <button (click)="deposit()">Deposit</button>
+</div>
+<div>NOTE: Deposit may take a couple of minutes to complete.</div>
+<div *ngIf="depositTxHash">
+    Deposit transaction hash: {{depositTxHash}}
+</div>
+<div>You can also increase your casino balance, by sending BNB to this address: {{depositAddress}}</div>
+<div>After sending BNB to the deposit address wait a couple of minutes and click the "Refresh Balance" button 
+    to see your new casino balance.
+</div>
+<div>
+    <span>
+        <button
+            (click)="getBalance()">Refresh Balance</button>
+    </span>
+</div>
+<div>If you want to withdaw from the casino balance use the following input:</div>
+<div>
+  <mat-form-field >
+    <mat-label>Amount to withdraw (up to {{balance}} BNB)</mat-label>
+    <input matInput 
+        type="number" 
+        min="0"
+        [max]="balance"
+        step="0.005"
+        [(ngModel)]="amountToWithdraw">
+  </mat-form-field>
+  <button (click)="withdraw()">Withdraw</button>
+</div>
+<div>
+    Withdraw tax is: {{withdrawTax}}
+</div>
+<div> 
+    Withdraw transaction hash: {{withdrawTransactionHash}}
+</div>

@@ -1,26 +1,21 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
-import { HttpClientModule } from '@angular/common/http';
-
-import { HttpClientInMemoryWebApiModule } from 'angular-in-memory-web-api';
-import { InMemoryDataService } from './in-memory-data.service';
-
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { AppRoutingModule } from './app-routing.module';
-
 import { AppComponent } from './app.component';
-import { DashboardComponent } from './dashboard/dashboard.component';
-import { HeroDetailComponent } from './hero-detail/hero-detail.component';
-import { HeroesComponent } from './heroes/heroes.component';
-import { HeroSearchComponent } from './hero-search/hero-search.component';
-import { MessagesComponent } from './messages/messages.component';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { BackendServiceComponent } from './backend-service/backend-service.component';
+import { AccountComponent } from './views/account/account.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { AuthGuardService } from './auth/auth-guard.service';
-import { LoginComponent } from './login/login.component';
+import { LoginComponent } from './views/login/login.component';
+import { AdminComponent } from './views/admin/admin.component';
+import { LoadingComponent } from './components/loading/loading.component';
+import { LoadingService } from './services/loading/loading.service';
+import { LoadingInterceptor } from './interceptors/loading-interceptor';
+import { GamesComponent } from './views/games/games.component';
+import { MatTabsModule } from '@angular/material/tabs';
 
 
 @NgModule({
@@ -33,6 +28,8 @@ import { LoginComponent } from './login/login.component';
     MatProgressSpinnerModule,
     MatButtonModule,
     MatInputModule,
+    MatTabsModule,
+
     // The HttpClientInMemoryWebApiModule module intercepts HTTP requests
     // and returns simulated server responses.
     // Remove it when a real server is ready to receive requests.
@@ -42,14 +39,16 @@ import { LoginComponent } from './login/login.component';
   ],
   declarations: [
     AppComponent,
-    DashboardComponent,
-    HeroesComponent,
-    HeroDetailComponent,
-    MessagesComponent,
-    HeroSearchComponent,
-    BackendServiceComponent,
+    AccountComponent,
     LoginComponent,
+    AdminComponent,
+    LoadingComponent,
+    GamesComponent,
   ],
-  bootstrap: [ AppComponent ]
+  bootstrap: [ AppComponent ],
+  providers: [
+    LoadingService,
+    { provide: HTTP_INTERCEPTORS, useClass: LoadingInterceptor, multi: true }
+  ]
 })
 export class AppModule { }

@@ -1,8 +1,8 @@
 {
-  "name": "angular.io-example",
+  "name": "onlyone",
   "version": "0.0.0",
-  "description": "Example project from an angular.io guide.",
-  "license": "MIT",
+  "description": "Onlyone Casino",
+  "license": "none",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",

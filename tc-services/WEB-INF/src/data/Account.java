@@ -55,4 +55,15 @@ public class Account {
         }
         return null;
     }
+
+    @Override
+    public String toString() {
+        return "Account{" +
+                "walletAddress='" + walletAddress + '\'' +
+                ", depositWalletAddress='" + depositWalletAddress + '\'' +
+                ", depositWalletPk='CENSORED'" +
+                ", bnbBalance=" + bnbBalance +
+                ", depositBnbBalance=" + depositBnbBalance +
+                '}';
+    }
 }
