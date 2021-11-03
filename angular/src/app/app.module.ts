@@ -29,7 +29,6 @@ import { MatTabsModule } from '@angular/material/tabs';
     MatButtonModule,
     MatInputModule,
     MatTabsModule,
-
     // The HttpClientInMemoryWebApiModule module intercepts HTTP requests
     // and returns simulated server responses.
     // Remove it when a real server is ready to receive requests.

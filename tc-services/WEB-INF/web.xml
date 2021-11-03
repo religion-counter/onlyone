@@ -60,6 +60,16 @@
         <url-pattern>/admin</url-pattern>
     </servlet-mapping>
 
+    <servlet>
+        <servlet-name>FortyServlet</servlet-name>
+        <servlet-class>mypackage.FortyServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>FortyServlet</servlet-name>
+        <url-pattern>/forty</url-pattern>
+    </servlet-mapping>
+
     <resource-ref>
         <description>Database</description>
         <res-ref-name>jdbc/database</res-ref-name>

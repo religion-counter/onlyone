@@ -46,6 +46,7 @@ export class AccountComponent implements OnInit {
       ).toPromise();
 
       this.balance = Number(resp.data).toFixed(18);
+      this.auth.balance = this.balance;
       // Set timeout to reset the loading indicator after 1 minute...
     } catch (e: any) {
       console.error("Couldn't get balance");
@@ -77,8 +78,7 @@ export class AccountComponent implements OnInit {
       console.error("Trying to withdraw more than I have.");
       return;
     }
-
-
+    
     const headers: any = {
       WALLET: this.address,
       AMOUNT: this.amountToWithdraw,
