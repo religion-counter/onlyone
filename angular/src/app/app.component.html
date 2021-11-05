@@ -1,9 +1,0 @@
-<h1>{{title}}</h1>
-<loading></loading>
-<nav mat-tab-nav-bar *ngIf="loggedIn">
-  <a mat-tab-link *ngFor="let routerLink of routerLinks"
-      (click)="navigate(routerLink[0])"
-      [active]="activatedRoute == routerLink[0]">{{routerLink[1]}}</a>
-  <a mat-tab-link disabled>Future work</a>
-</nav>
-<router-outlet></router-outlet>
