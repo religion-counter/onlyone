@@ -2,10 +2,9 @@ package mypackage;
 
 import data.Account;
 import data.DataService;
-import global.Constants;
 import global.Locks;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -25,13 +24,29 @@ public class FortyServlet extends HttpServlet {
     private static final String EVENS = "EVENS";
     private static final String NUMBER_PREFIX = "NUMBER_";
 
-    private final CookieService _cookieService = CookieService.INSTANCE;
-    private final DataService _dataservice = DataService.INSTANCE;
-    private final Locks _locks = Locks.INSTANCE;
+    private static final BigDecimal MAX_BET_AMOUNT = new BigDecimal("0.0005");
+    private static final BigDecimal MIN_BET_AMOUNT = new BigDecimal("0.00001");
+
+    private final CookieService _cookieService;
+    private final DataService _dataService;
+    private final Locks _locks;
     private final SecureRandom _secureRandom = new SecureRandom();
 
+    public FortyServlet() {
+        this._cookieService = CookieService.INSTANCE;
+        this._dataService = DataService.INSTANCE;
+        this._locks = Locks.INSTANCE;
+    }
+
+//    @VisibleForTesting
+//    FortyServlet(CookieService cookieService, DataService dataService, Locks locks) {
+//        this._cookieService = cookieService;
+//        this._dataService = dataService;
+//        this._locks = locks;
+//    }
+
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         LOG.info("Incoming forty game request.");
         String wallet = req.getHeader(HttpUtil.WALLET_HEADER);
         if (wallet == null) {
@@ -45,31 +60,43 @@ public class FortyServlet extends HttpServlet {
                 resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 return;
             }
-            Account acc = _dataservice.getAccount(wallet);
+            Account acc = _dataService.getAccount(wallet);
             if (acc == null) {
-                LOG.severe("Couldn't get account for wallet");
+                LOG.severe("Couldn't get account for wallet" + wallet);
                 resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 return;
             }
 
             String betAmount = req.getHeader(HttpUtil.BET_AMOUNT_HEADER);
             if (betAmount == null) {
-                LOG.severe("Invalid AMOUNT header");
+                LOG.severe("Null BET_AMOUNT header for wallet " + acc.walletAddress);
                 resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 return;
             }
 
-            double betAmountDouble;
+            BigDecimal betAmountDecimal;
             try {
-                betAmountDouble = Double.parseDouble(betAmount);
+                betAmountDecimal = new BigDecimal(betAmount);
             } catch (Exception e) {
-                LOG.severe("Invalid BET_AMOUNT header: " + betAmount);
+                LOG.severe("Invalid BET_AMOUNT header: " + betAmount + " for wallet " + wallet);
                 resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 return;
             }
-            if (betAmountDouble > acc.bnbBalance) {
+            if (betAmountDecimal.compareTo(acc.bnbBalance) > 0) {
                 LOG.severe("Trying to bet more than BNB balance. Amount to bet: " +
-                        betAmountDouble + ", BNB balance: " + acc.bnbBalance);
+                        betAmountDecimal + ", BNB balance: " + acc.bnbBalance + " for wallet " + wallet);
+                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                return;
+            }
+            if (betAmountDecimal.compareTo(MAX_BET_AMOUNT) > 0) {
+                LOG.severe("Trying to bet more than the allowed maximum. Amount to bet: " +
+                        betAmountDecimal + " for wallet " + wallet);
+                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                return;
+            }
+            if (betAmountDecimal.compareTo(MIN_BET_AMOUNT) < 0) {
+                LOG.severe("Trying to bet less than the allowed minimum. Amount to bet: " +
+                        betAmountDecimal + " for wallet " + wallet);
                 resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 return;
             }
@@ -81,21 +108,20 @@ public class FortyServlet extends HttpServlet {
                 return;
             }
 
-            // TODO make big decimal
             int chosenNumber = _secureRandom.nextInt(41);
             int winningMultiplier = playerWinningMultiplier(selectedBet, chosenNumber);
-            double amountWon = betAmountDouble * winningMultiplier;
-            acc.bnbBalance -= betAmountDouble;
-            acc.bnbBalance += amountWon;
+            BigDecimal amountWon = betAmountDecimal.multiply(new BigDecimal(winningMultiplier));
+            acc.bnbBalance = acc.bnbBalance.subtract(betAmountDecimal);
+            acc.bnbBalance = acc.bnbBalance.add(amountWon);
 
-            if (!_dataservice.updateAccount(acc)) {
+            if (!_dataService.updateAccount(acc)) {
                 LOG.severe("Couldn't update account after withdraw. FATAL Crashing the server");
                 resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 System.exit(1);
                 return;
             }
 
-            HttpUtil.postResponse(resp, chosenNumber + ":" + BigDecimal.valueOf(acc.bnbBalance) + ":" + BigDecimal.valueOf(amountWon));
+            HttpUtil.postResponse(resp, chosenNumber + ":" + acc.bnbBalance + ":" + amountWon);
         }
     }
 
@@ -117,7 +143,7 @@ public class FortyServlet extends HttpServlet {
                     return 0;
                 }
             case ODDS:
-                if ((chosenNumber != 0) && (chosenNumber % 2 == 1)) {
+                if (chosenNumber % 2 == 1) {
                     return 2;
                 } else {
                     return 0;
@@ -144,6 +170,7 @@ public class FortyServlet extends HttpServlet {
                             }
                         }
                     } catch (Exception e) {
+                        LOG.log(Level.SEVERE, "Cannot parse number: " + parts[1]);
                     }
                 }
         }
@@ -172,6 +199,7 @@ public class FortyServlet extends HttpServlet {
                             return true;
                         }
                     } catch (Exception e) {
+                        LOG.log(Level.SEVERE, "Cannot parse number: " + parts[1]);
                     }
                 }
         }

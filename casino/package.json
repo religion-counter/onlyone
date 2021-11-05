@@ -6,8 +6,8 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build --base-href=/angular/",
-    "watch": "ng build --watch --configuration development --base-href=/angular/",
+    "build": "ng build --base-href=/casino/",
+    "watch": "ng build --watch --configuration development --base-href=/casino/",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e"

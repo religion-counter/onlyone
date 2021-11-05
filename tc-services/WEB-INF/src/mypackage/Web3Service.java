@@ -59,7 +59,7 @@ public class Web3Service {
         }
     }
 
-    public String sendFunds(Credentials fromWallet, String toWallet, double amount) {
+    public String sendFunds(Credentials fromWallet, String toWallet, BigDecimal amount) {
         String fromAddress = null;
         try {
             fromAddress = fromWallet.getAddress();
@@ -67,7 +67,7 @@ public class Web3Service {
                 throw new Exception("From address is null.");
             }
             synchronized (_locks.getLockForWallet(fromAddress)) {
-                BigDecimal amountToSend = BigDecimal.valueOf(amount);
+                BigDecimal amountToSend = amount;
                 amountToSend = amountToSend.round(MathContext.DECIMAL64);
                 TransactionReceipt receipt = Transfer.sendFunds(_web3j,
                         fromWallet,

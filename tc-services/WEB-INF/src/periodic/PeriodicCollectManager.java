@@ -27,7 +27,7 @@ public class PeriodicCollectManager {
     private static final long INTERVAL = 1;
     private static final TimeUnit INTERVAL_UNIT = TimeUnit.HOURS;
 
-    private static final double COLLECT_THRESHOLD = 0.01;
+    private static final BigDecimal COLLECT_THRESHOLD = new BigDecimal("0.01");
 
     private ScheduledExecutorService _scheduledExecutor = null;
     private final DatabaseService _databaseService = DatabaseService.INSTANCE;
@@ -90,28 +90,29 @@ public class PeriodicCollectManager {
                 }
                 for (Account account : accountList) {
                     // Collect money if amount is greater than two times the withdraw tax.
-                    if (account.depositBnbBalance >= COLLECT_THRESHOLD) {
-                        try {
-                            Credentials fromWallet = Credentials.create(account.depositWalletPk);
-                            double amount = account.depositBnbBalance - Constants.WITHDRAW_TAX;
-                            String txHash = _web3service.sendFunds(
-                                    fromWallet,
-                                    masterWallet.getAddress(),
-                                    amount);
-                            LOG.info("Sending " + amount + " from " + fromWallet.getAddress() + " to " +
-                                    masterWallet.getAddress() + ".\nTxHash: " + txHash);
-                            String newBalance = _web3service.getBalanceWei(account.depositWalletAddress);
-                            BigDecimal newBalanceEth = Convert.fromWei(newBalance, Convert.Unit.ETHER);
-                            account.depositBnbBalance = newBalanceEth.doubleValue();
-                            synchronized (_locks.getLockForWallet(account.walletAddress)) {
+                    if (account.depositBnbBalance.compareTo(COLLECT_THRESHOLD) >= 0) {
+                        synchronized (_locks.getLockForWallet(account.walletAddress)) {
+                            try {
+                                Credentials fromWallet = Credentials.create(account.depositWalletPk);
+                                BigDecimal amount = account.depositBnbBalance.subtract(Constants.WITHDRAW_TAX);
+                                String txHash = _web3service.sendFunds(
+                                        fromWallet,
+                                        masterWallet.getAddress(),
+                                        amount);
+                                LOG.info("Sending " + amount + " from " + fromWallet.getAddress() + " to " +
+                                        masterWallet.getAddress() + ".\nTxHash: " + txHash);
+                                String newBalance = _web3service.getBalanceWei(account.depositWalletAddress);
+                                account.depositBnbBalance = Convert.fromWei(newBalance, Convert.Unit.ETHER);
+
                                 if (!_databaseService.updateAccount(account)) {
                                     LOG.log(Level.SEVERE, "Couldn't update account with new balance");
                                 }
+
+                            } catch (Exception e) {
+                                LOG.log(Level.SEVERE, "Couldn't send money from: " + account.walletAddress);
                             }
-                        } catch (Exception e) {
-                            LOG.log(Level.SEVERE, "Couldn't send money from: " + account.walletAddress);
                         }
-                    }
+                     }
                 }
             } finally {
                 long intervalForSchedule = INTERVAL;

@@ -1,5 +1,7 @@
 package global;
 
+import java.math.BigDecimal;
+
 public class Constants {
-    public static final Double WITHDRAW_TAX = 0.005;
+    public static final BigDecimal WITHDRAW_TAX = new BigDecimal("0.005");
 }

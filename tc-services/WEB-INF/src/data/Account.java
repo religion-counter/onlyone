@@ -5,6 +5,7 @@ import org.web3j.crypto.Keys;
 import org.web3j.crypto.Wallet;
 import org.web3j.crypto.WalletFile;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -16,21 +17,27 @@ public class Account {
     public String walletAddress;
     public String depositWalletAddress;
     public String depositWalletPk;
-    public double bnbBalance;
-    public double depositBnbBalance;
+    public BigDecimal bnbBalance;
+    public BigDecimal depositBnbBalance;
+    public BigDecimal onlyoneBalance;
+    public BigDecimal depositOnlyoneBalance;
 
     public Account(
             String walletAddress,
             String depositWalletAddress,
             String depositWalletPk,
-            double bnbBalance,
-            double depositBnbBalance
+            BigDecimal bnbBalance,
+            BigDecimal depositBnbBalance,
+            BigDecimal onlyoneBalance,
+            BigDecimal depositOnlyoneBalance
     ) {
         this.walletAddress = walletAddress;
         this.depositWalletAddress = depositWalletAddress;
         this.depositWalletPk = depositWalletPk;
         this.bnbBalance = bnbBalance;
         this.depositBnbBalance = depositBnbBalance;
+        this.onlyoneBalance = onlyoneBalance;
+        this.depositOnlyoneBalance = depositOnlyoneBalance;
     }
 
     public static Account generateNew(String walletAddress) {
@@ -48,8 +55,10 @@ public class Account {
                     walletAddress,
                     depositAddress,
                     depositPrivateKeyInHex,
-                    0,
-                    0);
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO);
         } catch (Exception e) {
             LOG.log(Level.SEVERE, "Error generating new account: ", e);
         }
@@ -61,9 +70,11 @@ public class Account {
         return "Account{" +
                 "walletAddress='" + walletAddress + '\'' +
                 ", depositWalletAddress='" + depositWalletAddress + '\'' +
-                ", depositWalletPk='CENSORED'" +
+                ", depositWalletPk='" + "CENSORED" + '\'' +
                 ", bnbBalance=" + bnbBalance +
                 ", depositBnbBalance=" + depositBnbBalance +
+                ", onlyoneBalance=" + onlyoneBalance +
+                ", depositOnlyoneBalance=" + depositOnlyoneBalance +
                 '}';
     }
 }

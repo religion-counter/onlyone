@@ -17,6 +17,9 @@ export class GamesComponent implements OnInit {
   EVENS = "EVENS";
   NUMBER_PREFIX = "NUMBER_";
 
+  MAX_BET_AMOUNT = 0.0005; // Only for the beginning. In future we will increase it.
+  MIN_BET_AMOUNT = 0.00001;
+
   lastChosen = "";
   lastWin = "";
   errorMessage = "";
@@ -30,6 +33,10 @@ export class GamesComponent implements OnInit {
 
   selectedBet = '';
   betAmount = 0;
+
+  get maxBetAmount(): number {
+    return Math.min(this.MAX_BET_AMOUNT, Number(this.auth.balance));
+  }
 
   get balance(): string {
     return this.auth.balance;
@@ -75,6 +82,20 @@ export class GamesComponent implements OnInit {
   }
 
   async startGame() {
+
+    if (this.betAmount > this.MAX_BET_AMOUNT) {
+      this.errorMessage = "Trying to bet more than the maximum bet amount.";
+      return;
+    }
+    if (this.betAmount < this.MIN_BET_AMOUNT) {
+      this.errorMessage = "Trying to bet less than the minimum bet amount.";
+      return;
+    }
+    if (this.betAmount > Number(this.balance)) {
+      this.errorMessage = "Trying to bet more than the available casino account balance." +
+          " Deposit more funds if you want to play";
+      return;
+    }
     
     const headers: any = {
       WALLET: this.auth.wallet,

@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -51,28 +52,28 @@ public class WithdrawServlet extends HttpServlet {
                 return;
             }
 
-            double amountToWithdraw;
+            BigDecimal amountToWithdraw;
             try {
-                amountToWithdraw = Double.parseDouble(amount);
+                amountToWithdraw = new BigDecimal(amount);
             } catch (Exception e) {
                 LOG.severe("Invalid AMOUNT header: " + amount);
                 resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 return;
             }
-            if (amountToWithdraw > acc.bnbBalance) {
+            if (amountToWithdraw.compareTo(acc.bnbBalance) > 0) {
                 LOG.severe("Trying to withdraw more than BNB balance. Amount to withdraw: " +
                         amountToWithdraw + ", BNB balance: " + acc.bnbBalance);
                 resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 return;
             }
-            if (amountToWithdraw < Constants.WITHDRAW_TAX) {
+            if (amountToWithdraw.compareTo(Constants.WITHDRAW_TAX) < 0) {
                 LOG.severe("Trying to withdraw less than BNB tax. Amount to withdraw: " + amountToWithdraw);
                 resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 return;
             }
 
-            acc.bnbBalance -= amountToWithdraw;
-            amountToWithdraw -= Constants.WITHDRAW_TAX;
+            acc.bnbBalance = acc.bnbBalance.subtract(amountToWithdraw);
+            amountToWithdraw = amountToWithdraw.subtract(Constants.WITHDRAW_TAX);
 
             String txHash = withdrawTo(acc.walletAddress, amountToWithdraw);
             if (txHash == null) {
@@ -95,7 +96,7 @@ public class WithdrawServlet extends HttpServlet {
     /**
      * Returns transaction hash.
      */
-    private String withdrawTo(String walletAddress, double amountToWithdraw) {
+    private String withdrawTo(String walletAddress, BigDecimal amountToWithdraw) {
         // read master wallet and pk from /etc/onlyone/acc
         try {
             Credentials masterWallet = WalletUtil.getMasterWallet();

@@ -1,6 +1,6 @@
 <h2>Account page</h2>
 <div>Hello: {{address}}</div>
-<div>Casino balance: {{balance}} BNB</div>
+<div>Casino account balance: {{balance}} BNB</div>
 <div>
     <mat-form-field>
         <mat-label>Amount to deposit (up to {{maxDepositAmount}} BNB)</mat-label>
@@ -16,9 +16,9 @@
 <div *ngIf="depositTxHash">
     Deposit transaction hash: {{depositTxHash}}
 </div>
-<div>You can also increase your casino balance, by sending BNB to this address: {{depositAddress}}</div>
+<div>You can also increase your casino account balance, by sending BNB to this address: {{depositAddress}}</div>
 <div>After sending BNB to the deposit address wait a couple of minutes and click the "Refresh Balance" button 
-    to see your new casino balance.
+    to see your new casino account balance.
 </div>
 <div>
     <span>
@@ -26,7 +26,7 @@
             (click)="getBalance()">Refresh Balance</button>
     </span>
 </div>
-<div>If you want to withdaw from the casino balance use the following input:</div>
+<div>If you want to withdaw from the casino account balance use the following input:</div>
 <div>
   <mat-form-field >
     <mat-label>Amount to withdraw (up to {{balance}} BNB)</mat-label>

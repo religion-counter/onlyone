@@ -6,6 +6,7 @@ import mypackage.Web3Service;
 import org.web3j.utils.Convert;
 
 import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
 import java.util.logging.Logger;
 
 public class BalanceService {
@@ -19,17 +20,16 @@ public class BalanceService {
     private final Web3Service _web3service = Web3Service.INSTANCE;
 
     public void updateBalance(Account acc, HttpServletResponse response) {
-        double web3DepositBalance = getWeb3Balance(acc.depositWalletAddress);
-        if (web3DepositBalance < acc.depositBnbBalance) {
+        BigDecimal web3DepositBalance = getWeb3Balance(acc.depositWalletAddress);
+        if (web3DepositBalance.compareTo(acc.depositBnbBalance) < 0) {
             LOG.severe("Web3 balance is less than balance in DB.");
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             return;
-        }
-        if (web3DepositBalance > acc.depositBnbBalance) {
-            LOG.info("Adding balance: " + (web3DepositBalance - acc.depositBnbBalance) +
+        } else if (web3DepositBalance.compareTo(acc.depositBnbBalance) > 0) {
+            LOG.info("Adding balance: " + web3DepositBalance.subtract(acc.depositBnbBalance) +
                     ". Web3 balance: " + web3DepositBalance +
                     ", Balance in DB: " + acc.depositBnbBalance + ". ");
-            acc.bnbBalance += web3DepositBalance - acc.depositBnbBalance;
+            acc.bnbBalance = acc.bnbBalance.add(web3DepositBalance.subtract(acc.depositBnbBalance));
             acc.depositBnbBalance = web3DepositBalance;
             if (!_dataservice.updateAccount(acc)) {
                 LOG.severe("Couldn't update account: " + acc.walletAddress);
@@ -37,12 +37,14 @@ public class BalanceService {
                 return;
             }
         }
+        LOG.info("Updated balance successfully for " + acc.walletAddress);
+        // TODO Implement update for Onlyone token as well.
     }
 
-    public double getWeb3Balance(String wallet) {
+    public BigDecimal getWeb3Balance(String wallet) {
         synchronized (_locks.getLockForWallet(wallet)) {
             String wei = _web3service.getBalanceWei(wallet);
-            return Convert.fromWei(wei, Convert.Unit.ETHER).doubleValue();
+            return Convert.fromWei(wei, Convert.Unit.ETHER);
         }
     }
 }

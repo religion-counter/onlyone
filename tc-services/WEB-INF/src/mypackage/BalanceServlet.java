@@ -42,7 +42,7 @@ public class BalanceServlet extends HttpServlet {
             }
 
             _balanceService.updateBalance(acc, resp);
-            HttpUtil.postResponse(resp, Double.toString(acc.bnbBalance));
+            HttpUtil.postResponse(resp, acc.bnbBalance.toString());
         }
     }
 }

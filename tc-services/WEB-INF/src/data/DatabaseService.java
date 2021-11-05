@@ -3,6 +3,7 @@ package data;
 import global.Locks;
 import org.sqlite.SQLiteDataSource;
 
+import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,8 +44,13 @@ public class DatabaseService {
                 String depositPk = account.getString(Queries.DEPOSIT_ADDRESS_PK_COL);
                 String bnbBalance = account.getString(Queries.BNB_BALANCE_COL);
                 String depositBnbBalance = account.getString(Queries.DEPOSIT_BNB_BALANCE_COL);
-                return new Account(walletAddress, depositAddress, depositPk, Double.parseDouble(bnbBalance),
-                        Double.parseDouble(depositBnbBalance));
+                String onlyoneBalance = account.getString(Queries.ONLYONE_BALANCE_COL);
+                String depositOnlyoneBalance = account.getString(Queries.DEPOSIT_ONLYONE_BALANCE_COL);
+                return new Account(walletAddress, depositAddress, depositPk,
+                        new BigDecimal(bnbBalance),
+                        new BigDecimal(depositBnbBalance),
+                        new BigDecimal(onlyoneBalance),
+                        new BigDecimal(depositOnlyoneBalance));
             } catch (Exception e) {
                 LOG.log(Level.SEVERE, "Error executing query: ", e);
             }
@@ -58,9 +64,11 @@ public class DatabaseService {
                 PreparedStatement statement = _connection.prepareStatement(Queries.UPDATE_ACCOUNT);
                 statement.setString(1, account.depositWalletAddress);
                 statement.setString(2, account.depositWalletPk);
-                statement.setString(3, String.valueOf(account.bnbBalance));
-                statement.setString(4, String.valueOf(account.depositBnbBalance));
-                statement.setString(5, account.walletAddress);
+                statement.setString(3, account.bnbBalance.toString());
+                statement.setString(4, account.depositBnbBalance.toString());
+                statement.setString(5, account.onlyoneBalance.toString());
+                statement.setString(6, account.depositOnlyoneBalance.toString());
+                statement.setString(7, account.walletAddress);
                 LOG.info("Executing " + Queries.UPDATE_ACCOUNT + " to update an account in the Database.");
                 int update = statement.executeUpdate();
                 LOG.info("Accounts updated: " + update);
@@ -79,8 +87,10 @@ public class DatabaseService {
                 statement.setString(1, account.walletAddress);
                 statement.setString(2, account.depositWalletAddress);
                 statement.setString(3, account.depositWalletPk);
-                statement.setString(4, String.valueOf(account.bnbBalance));
-                statement.setString(5, String.valueOf(account.depositBnbBalance));
+                statement.setString(4, account.bnbBalance.toString());
+                statement.setString(5, account.depositBnbBalance.toString());
+                statement.setString(6, account.onlyoneBalance.toString());
+                statement.setString(7, account.depositOnlyoneBalance.toString());
                 LOG.info("Executing " + Queries.ADD_ACCOUNT + " to add an account to the Database.");
                 int update = statement.executeUpdate();
                 LOG.info("Accounts added: " + update);
@@ -125,7 +135,7 @@ public class DatabaseService {
     public List<Account> getAllAccounts() {
         ArrayList<Account> result = new ArrayList<>();
         try {
-            StringBuilder res = new StringBuilder("Printing all accounts on startup:");
+            StringBuilder logMessage = new StringBuilder("Printing all accounts on startup:");
             ResultSet rs = _connection.prepareStatement(Queries.ALL_ACCOUNTS).executeQuery();
             while (rs.next()) {
                 String walletAddress = rs.getString(Queries.WALLET_ADDRESS_COL);
@@ -133,23 +143,22 @@ public class DatabaseService {
                 String depositPk = rs.getString(Queries.DEPOSIT_ADDRESS_PK_COL);
                 String bnbBalance = rs.getString(Queries.BNB_BALANCE_COL);
                 String depositWalletBnbBalance = rs.getString(Queries.DEPOSIT_BNB_BALANCE_COL);
+                String onlyoneBalance = rs.getString(Queries.ONLYONE_BALANCE_COL);
+                String depositOnlyoneBalance = rs.getString(Queries.DEPOSIT_BNB_BALANCE_COL);
                 Account account = new Account(
                         walletAddress, depositWalletAddress, depositPk,
-                        Double.parseDouble(bnbBalance),
-                        Double.parseDouble(depositWalletBnbBalance)
+                        new BigDecimal(bnbBalance),
+                        new BigDecimal(depositWalletBnbBalance),
+                        new BigDecimal(onlyoneBalance),
+                        new BigDecimal(depositOnlyoneBalance)
                 );
                 result.add(account);
-                res.append("Address: ").append(walletAddress).append('\n')
-                        .append("Deposit address: ").append(depositWalletAddress).append('\n')
-                        .append("Deposit PK: ").append("CENSORED").append('\n')
-                        .append("BNB balance: ").append(bnbBalance).append('\n')
-                        .append("Deposit BNB Balance: ").append(depositWalletBnbBalance).append('\n')
-                        .append('\n');
+                logMessage.append(account);
             }
-            LOG.info(res.toString());
+            LOG.info(logMessage.toString());
             return result;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.log(Level.SEVERE, "Error getting all accounts information: ", e);
         }
         return null;
     }

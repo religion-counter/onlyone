@@ -21,7 +21,7 @@
     Bet on a single number between 0 and 40 with a multiplier of 40. (If you bet 0.01 BNB on 0 and the algorithm chooses 0
     then you win 0.40 BNB.)
 </div>
-<div>Casino balance: {{balance}} BNB</div>
+<div>Casino account balance: {{balance}} BNB</div>
 <div>
     <button (click)="oneToTwenty()" 
         [ngStyle]="getStyle(ONE_TO_TWENTY)">1-20</button>
@@ -39,12 +39,12 @@
 </div>
 <div>
     <mat-form-field >
-      <mat-label>Place your bet (up to {{balance}} BNB)</mat-label>
+      <mat-label>Place your bet (up to {{maxBetAmount}} BNB). Minimum bet is {{MIN_BET_AMOUNT}} BNB.</mat-label>
       <input matInput 
           type="number" 
           min="0"
-          [max]="balance"
-          step="0.001"
+          [max]="maxBetAmount"
+          step="0.00001"
           [(ngModel)]="betAmount">
     </mat-form-field>
     <button (click)="startGame()">Start Game</button>
@@ -54,4 +54,8 @@
 </div>
 <div *ngIf="errorMessage">
     Error playing forty game: {{errorMessage}}
+</div>
+<div>
+    NOTE: This is still an alpha version of the Onlyone Casino. Soon we will add an option to
+    deposit, withdraw and bet with Onlyone token and we will increase the maximum bet amount.
 </div>
