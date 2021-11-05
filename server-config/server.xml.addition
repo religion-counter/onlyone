@@ -1,0 +1,6 @@
+        <Valve className="org.apache.catalina.valves.rewrite.RewriteValve" />
+
+        <Valve className="org.apache.catalina.valves.ErrorReportValve"
+               showReport="false" 
+               showServerInfo="false"/>   
+
