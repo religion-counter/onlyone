@@ -102,7 +102,14 @@ public class PeriodicCollectManager {
                                 LOG.info("Sending " + amount + " from " + fromWallet.getAddress() + " to " +
                                         masterWallet.getAddress() + ".\nTxHash: " + txHash);
                                 String newBalance = _web3service.getBalanceWei(account.depositWalletAddress);
-                                account.depositBnbBalance = Convert.fromWei(newBalance, Convert.Unit.ETHER);
+                                BigDecimal newBalanceDec = Convert.fromWei(newBalance, Convert.Unit.ETHER);
+                                if (newBalanceDec.compareTo(account.depositBnbBalance) > 0) {
+                                    // Someone deposited while the collect task was running.
+                                    LOG.info("Someone deposited funds while the collect task was running. Address: "
+                                            + account.walletAddress);
+                                    account.bnbBalance = account.bnbBalance.add(newBalanceDec.subtract(account.depositBnbBalance));
+                                }
+                                account.depositBnbBalance = newBalanceDec;
 
                                 if (!_databaseService.updateAccount(account)) {
                                     LOG.log(Level.SEVERE, "Couldn't update account with new balance");

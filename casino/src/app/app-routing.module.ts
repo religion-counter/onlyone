@@ -21,6 +21,8 @@ const routes: Routes = [
 
   // ONLY FOR DEV
   { path: 'admin', component: AdminComponent },
+
+  { path: '**', redirectTo: '/account', pathMatch: 'full' },
 ];
 
 @NgModule({

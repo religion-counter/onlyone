@@ -112,11 +112,17 @@ export class GamesComponent implements OnInit {
     } catch (e: any) {
        console.log("Error playing forty game.");
        console.error(e);
-       this.errorMessage = e;
+       if (e.message) {
+         this.errorMessage = e.message;
+       } else {
+         this.errorMessage = e;
+       }
+       
        this.lastChosen = '';
        this.lastWin = "0";
        return;
     }
+    this.errorMessage = '';
     this.lastChosen = response[0];
     this.auth.balance = response[1];
     this.lastWin = response[2];

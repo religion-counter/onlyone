@@ -62,7 +62,7 @@ public class FortyServlet extends HttpServlet {
             }
             Account acc = _dataService.getAccount(wallet);
             if (acc == null) {
-                LOG.severe("Couldn't get account for wallet" + wallet);
+                LOG.severe("Couldn't get account for wallet " + wallet);
                 resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 return;
             }
@@ -121,6 +121,12 @@ public class FortyServlet extends HttpServlet {
                 return;
             }
 
+            // Sleep 1 second to delay the response.
+            try {
+                Thread.currentThread().sleep(1000);
+            } catch (InterruptedException e) {
+                LOG.log(Level.SEVERE, "Sleep was interrupted for wallet: " + wallet, e);
+            }
             HttpUtil.postResponse(resp, chosenNumber + ":" + acc.bnbBalance + ":" + amountWon);
         }
     }

@@ -36,8 +36,19 @@ public class DatabaseService {
                 LOG.info("Executing " + Queries.ACCOUNT_BY_WALLET + " to get account.");
                 ResultSet account = statement.executeQuery();
 
-                String walletAddressForCheck = account.getString(Queries.WALLET_ADDRESS_COL);
+                String walletAddressForCheck = null;
+                if (account.next()) {
+                    walletAddressForCheck = account.getString(Queries.WALLET_ADDRESS_COL);
+                }
+                if (walletAddressForCheck == null) {
+                    LOG.info("Account doesn't exist in DB: " + walletAddress);
+                    return null;
+                }
+
                 if (!walletAddress.equals(walletAddressForCheck)) {
+                    LOG.log(Level.SEVERE, "Account for check doesn't match requested account. "
+                            + "RequestedAccount: " + walletAddress +
+                            ", Account in DB:"  + walletAddressForCheck);
                     return null;
                 }
                 String depositAddress = account.getString(Queries.DEPOSIT_ADDRESS_COL);
@@ -80,7 +91,7 @@ public class DatabaseService {
         }
     }
 
-    public void addAccount(Account account) {
+    public boolean addAccount(Account account) {
         synchronized (_locks.getLockForWallet(account.walletAddress)) {
             try {
                 PreparedStatement statement = _connection.prepareStatement(Queries.ADD_ACCOUNT);
@@ -96,8 +107,10 @@ public class DatabaseService {
                 LOG.info("Accounts added: " + update);
             } catch (Exception e) {
                 LOG.log(Level.SEVERE, "Error adding account to the Database: ", e);
+                return false;
             }
         }
+        return true;
     }
 
 

@@ -9,8 +9,8 @@ public class DataService {
         return _databaseService.getAccount(walletAddress);
     }
 
-    public void addAccount(Account account) {
-        _databaseService.addAccount(account);
+    public boolean addAccount(Account account) {
+        return _databaseService.addAccount(account);
     }
 
     public boolean updateAccount(Account account) {

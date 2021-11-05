@@ -22,7 +22,7 @@ public class Queries {
                     DEPOSIT_ADDRESS_COL + ", " +
                     DEPOSIT_ADDRESS_PK_COL + ", " +
                     BNB_BALANCE_COL + ", " +
-                    DEPOSIT_BNB_BALANCE_COL +
+                    DEPOSIT_BNB_BALANCE_COL + ", " +
                     ONLYONE_BALANCE_COL + ", " +
                     DEPOSIT_ONLYONE_BALANCE_COL + ") " +
             "VALUES (?, ?, ?, ?, ?, ?, ?);";

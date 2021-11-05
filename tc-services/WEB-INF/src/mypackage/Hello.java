@@ -62,7 +62,11 @@ public final class Hello extends HttpServlet {
                 LOG.info("Didn't find account for " + walletAddress + ". Generating a new one.");
                 account = Account.generateNew(walletAddress);
                 if (account != null) {
-                    _dataservice.addAccount(account);
+                    if (!_dataservice.addAccount(account)) {
+                        LOG.severe("Couldn't add newly generated account ot the DB.");
+                        resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                        return;
+                    }
                 } else {
                     LOG.severe("Couldn't generate account for " + walletAddress);
                 }

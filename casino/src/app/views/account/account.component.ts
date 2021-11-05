@@ -13,6 +13,8 @@ import { AuthGuardService } from "../../services/auth/auth-guard.service";
 })
 export class AccountComponent implements OnInit {
 
+  // TODO Create custom input for BigDecimal
+
   withdrawTax = 0.005;
   address: string = '';
   balance = '';
