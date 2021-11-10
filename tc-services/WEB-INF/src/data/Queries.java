@@ -15,6 +15,10 @@ public class Queries {
     public static final String DEPOSIT_BNB_BALANCE_COL = "deposit_bnb_balance";
     public static final String ONLYONE_BALANCE_COL = "onlyone_balance";
     public static final String DEPOSIT_ONLYONE_BALANCE_COL = "deposit_onlyone_balance";
+    public static final String AMOUNT_BNB_PLAYED_IN_CASINO = "amount_bnb_played_in_casino";
+    public static final String AMOUNT_BNB_WON_IN_CASINO = "amount_bnb_won_in_casino";
+    public static final String AMOUNT_ONLYONE_PLAYED_IN_CASINO = "amount_onlyone_played_in_casino";
+    public static final String AMOUNT_ONLYONE_WON_IN_CASINO = "amount_onlyone_won_in_casino";
 
     public static final String ADD_ACCOUNT =
             "INSERT INTO Accounts (" +
@@ -24,8 +28,12 @@ public class Queries {
                     BNB_BALANCE_COL + ", " +
                     DEPOSIT_BNB_BALANCE_COL + ", " +
                     ONLYONE_BALANCE_COL + ", " +
-                    DEPOSIT_ONLYONE_BALANCE_COL + ") " +
-            "VALUES (?, ?, ?, ?, ?, ?, ?);";
+                    DEPOSIT_ONLYONE_BALANCE_COL + ", " +
+                    AMOUNT_BNB_PLAYED_IN_CASINO + ", " +
+                    AMOUNT_BNB_WON_IN_CASINO + ", " +
+                    AMOUNT_ONLYONE_PLAYED_IN_CASINO + ", " +
+                    AMOUNT_ONLYONE_WON_IN_CASINO + ") " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 
     public static final String UPDATE_ACCOUNT =
             "UPDATE Accounts " +
@@ -34,7 +42,11 @@ public class Queries {
                     BNB_BALANCE_COL + " = ? , " +
                     DEPOSIT_BNB_BALANCE_COL + " = ? , " +
                     ONLYONE_BALANCE_COL + " = ? , " +
-                    DEPOSIT_ONLYONE_BALANCE_COL + " = ? " +
+                    DEPOSIT_ONLYONE_BALANCE_COL + " = ? , " +
+                    AMOUNT_BNB_PLAYED_IN_CASINO + " = ? , " +
+                    AMOUNT_BNB_WON_IN_CASINO + " = ? , " +
+                    AMOUNT_ONLYONE_PLAYED_IN_CASINO + " = ? , " +
+                    AMOUNT_ONLYONE_WON_IN_CASINO + " = ? " +
             "WHERE " + WALLET_ADDRESS_COL + " = ? ;";
 
     public static final String ACCOUNT_BY_WALLET = "" +
@@ -45,7 +57,11 @@ public class Queries {
                 BNB_BALANCE_COL + ", " +
                 DEPOSIT_BNB_BALANCE_COL + ", " +
                 ONLYONE_BALANCE_COL + ", " +
-                DEPOSIT_ONLYONE_BALANCE_COL + " " +
+                DEPOSIT_ONLYONE_BALANCE_COL + ", " +
+                AMOUNT_BNB_PLAYED_IN_CASINO + ", " +
+                AMOUNT_BNB_WON_IN_CASINO + ", " +
+                AMOUNT_ONLYONE_PLAYED_IN_CASINO + ", " +
+                AMOUNT_ONLYONE_WON_IN_CASINO + " " +
             "FROM Accounts " +
             "WHERE " + WALLET_ADDRESS_COL +
             " = ?";
@@ -58,7 +74,10 @@ public class Queries {
                     BNB_BALANCE_COL + " string, " +
                     DEPOSIT_BNB_BALANCE_COL + " string, " +
                     ONLYONE_BALANCE_COL + " string, " +
-                    DEPOSIT_ONLYONE_BALANCE_COL + " string " +
+                    DEPOSIT_ONLYONE_BALANCE_COL + " string, " +
+                    AMOUNT_BNB_PLAYED_IN_CASINO + " string, " +
+                    AMOUNT_BNB_WON_IN_CASINO + " string, " +
+                    AMOUNT_ONLYONE_PLAYED_IN_CASINO + " string, " +
+                    AMOUNT_ONLYONE_WON_IN_CASINO + " string " +
                     ")";
-
 }

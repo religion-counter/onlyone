@@ -8,10 +8,9 @@ class FortyTest {
     SecureRandom random = new SecureRandom();
 
     void testThousandGamesOneToTwenty() {
-        BigDecimal casinoBalance = new BigDecimal("1.5"); // BNB
-        BigDecimal playerBalance = new BigDecimal("2000"); // BNB
-
-        BigDecimal bet = new BigDecimal("0.01");
+        BigDecimal casinoBalance = new BigDecimal("30000");
+        BigDecimal playerBalance = new BigDecimal("30000");
+        BigDecimal bet = new BigDecimal("10");
 
         int numberOfGames = 1000000;
 
@@ -36,10 +35,9 @@ class FortyTest {
     }
 
     void testThousandGamesOdds() {
-        BigDecimal casinoBalance = new BigDecimal("1.5"); // BNB
-        BigDecimal playerBalance = new BigDecimal("2000"); // BNB
-
-        BigDecimal bet = new BigDecimal("0.01");
+        BigDecimal casinoBalance = new BigDecimal("30000");
+        BigDecimal playerBalance = new BigDecimal("30000");
+        BigDecimal bet = new BigDecimal("10");
 
         int numberOfGames = 1000000;
 
@@ -64,10 +62,9 @@ class FortyTest {
     }
 
     void testThousandGamesOneNumber(int betNumber) {
-        BigDecimal casinoBalance = new BigDecimal("3"); // BNB
-        BigDecimal playerBalance = new BigDecimal("2000"); // BNB
-
-        BigDecimal bet = new BigDecimal("0.0005");
+        BigDecimal casinoBalance = new BigDecimal("30000");
+        BigDecimal playerBalance = new BigDecimal("30000");
+        BigDecimal bet = new BigDecimal("10");
 
         int numberOfGames = 1000000;
 

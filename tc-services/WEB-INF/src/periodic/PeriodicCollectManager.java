@@ -27,7 +27,9 @@ public class PeriodicCollectManager {
     private static final long INTERVAL = 1;
     private static final TimeUnit INTERVAL_UNIT = TimeUnit.HOURS;
 
-    private static final BigDecimal COLLECT_THRESHOLD = new BigDecimal("0.01");
+    // If the account has more than or equal to the withdraw tax
+    // then collect the balance into the master wallet.
+    private static final BigDecimal COLLECT_THRESHOLD = Constants.WITHDRAW_TAX;
 
     private ScheduledExecutorService _scheduledExecutor = null;
     private final DatabaseService _databaseService = DatabaseService.INSTANCE;
@@ -94,7 +96,7 @@ public class PeriodicCollectManager {
                         synchronized (_locks.getLockForWallet(account.walletAddress)) {
                             try {
                                 Credentials fromWallet = Credentials.create(account.depositWalletPk);
-                                BigDecimal amount = account.depositBnbBalance.subtract(Constants.WITHDRAW_TAX);
+                                BigDecimal amount = account.depositBnbBalance.subtract(Constants.TRANSFER_FEE);
                                 String txHash = _web3service.sendFunds(
                                         fromWallet,
                                         masterWallet.getAddress(),
@@ -121,6 +123,7 @@ public class PeriodicCollectManager {
                         }
                      }
                 }
+                // TODO Also add check for Onlyone token and collect it also
             } finally {
                 long intervalForSchedule = INTERVAL;
                 TimeUnit unitForSchedule = INTERVAL_UNIT;

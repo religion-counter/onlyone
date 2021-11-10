@@ -1,2 +1,8 @@
 <h2>Admin</h2>
 <div>{{accounts}}</div>
+<div *ngIf="result">
+    {{result}}
+</div>
+<div *ngIf="errorMessage" style="color: red;">
+    {{errorMessage}}
+</div>

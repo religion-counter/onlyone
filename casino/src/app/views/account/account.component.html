@@ -1,47 +1,84 @@
 <h2>Account page</h2>
-<div>Hello: {{address}}</div>
-<div>Casino account balance: {{balance}} BNB</div>
+<div>Hello: {{accountAddress}}</div>
 <div>
-    <mat-form-field>
-        <mat-label>Amount to deposit (up to {{maxDepositAmount}} BNB)</mat-label>
-        <input matInput 
-            type="number" step="0.005" 
-            [max]="maxDepositAmount"
-            min="0"
-            [(ngModel)]="amountToDeposit">
-      </mat-form-field>
-      <button (click)="deposit()">Deposit</button>
+    <span>Casino account BNB balance: {{bnbBalance}} BNB</span>
+    <span>
+        <mat-form-field>
+            <mat-label>Amount to deposit (up to {{maxDepositBnbAmount}} BNB)</mat-label>
+            <input matInput 
+                type="number" step="0.001" 
+                min="0"
+                [(ngModel)]="amountBnbToDeposit">
+        </mat-form-field>
+        <button (click)="depositBnb()">Deposit BNB</button>
+    </span>
 </div>
+<div *ngIf="depositBnbTxHash">
+    Deposit transaction hash: {{depositBnbTxHash}}
+</div>
+<div>
+    <span>Casino account ONLYONE balance: {{onlyoneBalance}} ONLYONE</span>
+    <span>
+        <mat-form-field>
+            <mat-label>Amount to deposit (up to {{maxDepositOnlyoneAmount}} ONLYONE)</mat-label>
+            <input matInput 
+                type="number" step="0.0001" 
+                min="0"
+                [(ngModel)]="amountOnlyoneToDeposit">
+        </mat-form-field>
+        <button (click)="depositOnlyone()">Deposit ONLYONE</button>
+    </span>
+</div>
+<div *ngIf="depositOnlyoneTxHash">
+    Deposit transaction hash: {{depositOnlyoneTxHash}}
+</div>
+
 <div>NOTE: Deposit may take a couple of minutes to complete.</div>
-<div *ngIf="depositTxHash">
-    Deposit transaction hash: {{depositTxHash}}
-</div>
-<div>You can also increase your casino account balance, by sending BNB to this address: {{depositAddress}}</div>
-<div>After sending BNB to the deposit address wait a couple of minutes and click the "Refresh Balance" button 
-    to see your new casino account balance.
+<div>You can also increase your casino account BNB or ONLYONE balance, by sending BNB or ONLYONE
+    to this address: {{depositAddress}}</div>
+<div>After sending BNB or ONLYONE to the deposit address wait a couple of minutes and
+    click the "Refresh Balance" button 
+   to see your new casino account BNB or ONLYONE balance.
 </div>
 <div>
     <span>
         <button
-            (click)="getBalance()">Refresh Balance</button>
+            (click)="refreshBalance()">Refresh Balance</button>
     </span>
 </div>
-<div>If you want to withdaw from the casino account balance use the following input:</div>
+<div>If you want to withdraw from the casino account balance use the following inputs. 
+    The withdrawn funds will be sent to: {{accountAddress}}</div>
 <div>
   <mat-form-field >
-    <mat-label>Amount to withdraw (up to {{balance}} BNB)</mat-label>
+    <mat-label>Amount to withdraw (up to {{bnbBalance}} BNB)</mat-label>
     <input matInput 
         type="number" 
         min="0"
-        [max]="balance"
-        step="0.005"
-        [(ngModel)]="amountToWithdraw">
+        step="0.001"
+        [(ngModel)]="amountBnbToWithdraw">
   </mat-form-field>
-  <button (click)="withdraw()">Withdraw</button>
+  <button (click)="withdrawBnb()">Withdraw BNB</button>
 </div>
 <div>
-    Withdraw tax is: {{withdrawTax}} BNB
+    Withdraw BNB tax is: {{withdrawTaxBnb}} BNB
 </div>
-<div> 
-    Withdraw transaction hash: {{withdrawTransactionHash}}
+<div *ngIf="withdrawBnbTransactionHash"> 
+    Withdraw BNB transaction hash: {{withdrawBnbTransactionHash}}
+</div>
+<div>
+    <mat-form-field >
+      <mat-label>Amount to withdraw (up to {{onlyoneBalance}} ONLYONE)</mat-label>
+      <input matInput 
+          type="number" 
+          min="0"
+          step="0.001"
+          [(ngModel)]="amountOnlyoneToWithdraw">
+    </mat-form-field>
+    <button (click)="withdrawOnlyone()">Withdraw ONLYONE</button>
+  </div>
+  <div>
+      Withdraw ONLYONE tax is: {{withdrawTaxOnlyone}} ONLYONE
+  </div>
+<div *ngIf="withdrawOnlyoneTransactionHash"> 
+    Withdraw ONLYONE transaction hash: {{withdrawOnlyoneTransactionHash}}
 </div>

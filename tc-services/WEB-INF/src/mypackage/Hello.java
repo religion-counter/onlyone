@@ -5,6 +5,7 @@ import data.DataService;
 import data.DatabaseService;
 import global.BalanceService;
 import global.Locks;
+import org.web3j.utils.Convert;
 import periodic.PeriodicCollectManager;
 
 import javax.servlet.http.Cookie;
@@ -12,6 +13,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public final class Hello extends HttpServlet {
@@ -99,7 +103,22 @@ public final class Hello extends HttpServlet {
 
             _balanceService.updateBalance(account, resp);
 
-            HttpUtil.postResponse(resp, account.depositWalletAddress + ":" + account.bnbBalance + ":" + token);
+            BigInteger web3OnlyoneBalance;
+            try {
+                web3OnlyoneBalance = Web3Service.INSTANCE.getOnlyone().balanceOf(walletAddress).send();
+            } catch (Exception e) {
+                LOG.log(Level.SEVERE, "Cannot get web3OnlyoneBalance", e);
+                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                return;
+            }
+            BigDecimal web3OnlyoneBalanceDec = Convert.fromWei(web3OnlyoneBalance.toString(), Convert.Unit.ETHER);
+
+            HttpUtil.postResponse(resp, new HelloResponse(
+                    account.depositWalletAddress,
+                    account.bnbBalance,
+                    account.onlyoneBalance,
+                    token,
+                    web3OnlyoneBalanceDec));
         }
     }
 
@@ -108,6 +127,27 @@ public final class Hello extends HttpServlet {
         LOG.info("Destroying hello servlet");
         _periodicCollectManager.stopPeriodicCollectTask();
         DatabaseService.INSTANCE.closeSqlConnection();
+    }
+
+    static class HelloResponse {
+        public String depositWalletAddress;
+        public BigDecimal bnbBalance;
+        public BigDecimal onlyoneBalance;
+        public String token;
+        public BigDecimal web3OnlyoneBalance;
+
+        HelloResponse(
+                String depositWalletAddress,
+                BigDecimal bnbBalance,
+                BigDecimal onlyoneBalance,
+                String token,
+                BigDecimal web3OnlyoneBalance) {
+            this.depositWalletAddress = depositWalletAddress;
+            this.bnbBalance = bnbBalance;
+            this.onlyoneBalance = onlyoneBalance;
+            this.token = token;
+            this.web3OnlyoneBalance = web3OnlyoneBalance;
+        }
     }
 }
 

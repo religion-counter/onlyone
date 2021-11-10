@@ -16,6 +16,7 @@ import { LoadingService } from './services/loading/loading.service';
 import { LoadingInterceptor } from './interceptors/loading-interceptor';
 import { GamesComponent } from './views/games/games.component';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatDialogModule } from '@angular/material/dialog';
 
 
 @NgModule({
@@ -29,6 +30,7 @@ import { MatTabsModule } from '@angular/material/tabs';
     MatButtonModule,
     MatInputModule,
     MatTabsModule,
+    MatDialogModule,
     // The HttpClientInMemoryWebApiModule module intercepts HTTP requests
     // and returns simulated server responses.
     // Remove it when a real server is ready to receive requests.

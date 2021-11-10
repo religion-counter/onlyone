@@ -15,12 +15,16 @@ import Web3 from "web3";
 
     }
 
+    web3: Web3 | undefined = undefined;
+    account = "";
     accounts = "";
+    result = "";
+    accountsToAdd = "";
+    errorMessage = "";
 
     async ngOnInit() {
-        let web3;
         if (typeof (window as any).ethereum !== 'undefined') {
-        web3 = new Web3(Web3.givenProvider);
+        this.web3 = new Web3(Web3.givenProvider);
         console.log('Web3 wallet is installed!');
         } else {
             // add message and hide connect button.
@@ -38,17 +42,17 @@ import Web3 from "web3";
                                 blockExplorerUrls: ['https://bscscan.com/'] 
                             }] 
             });
-            const accounts = await web3.eth.requestAccounts(); //ethereum.request({ method: 'eth_requestAccounts' });
-            const account = web3.utils.toChecksumAddress(accounts[0]);
+            const accounts = await this.web3.eth.requestAccounts(); //ethereum.request({ method: 'eth_requestAccounts' });
+            this.account = this.web3.utils.toChecksumAddress(accounts[0]);
 
             let headers: any = {
-                WALLET: account,
+                WALLET: this.account,
             }
             const signMessageObj = await this.http.get<any>(
                 "/services/getSignMessage",
                 { headers: new HttpHeaders(headers) }).toPromise()
             const signMessage = signMessageObj.data;
-            const signature = await web3.eth.personal.sign(signMessage, account, "");
+            const signature = await this.web3.eth.personal.sign(signMessage, this.account, "");
             // TODO Check the signature with the DB. If the signature match with the DB - log in the user.
 
             // here we send the signature and account to the backend and if the account exists
@@ -70,11 +74,60 @@ import Web3 from "web3";
             this.accounts = response.data;
         } catch (e: any) {
             if (e && e.status) {
-                this.accounts = "Error: " + e.status;
+                this.errorMessage = "Error: " + e.status;
             } else {
-                this.accounts = "Error";
+                this.errorMessage = "Error";
             }
             console.log(e);
         }
     } 
+
+    async addAccounts() {
+        this.result = '';
+        this.errorMessage = '';
+        try {
+            let headers: any = {
+                WALLET: this.account,
+            }
+            const signMessageObj = await this.http.get<any>(
+                "/services/getSignMessage",
+                { headers: new HttpHeaders(headers) }).toPromise()
+            const signMessage = signMessageObj.data;
+            if (!this.web3) {
+                this.errorMessage = "web3 is undefined";
+                return;
+            }
+            const signature = await this.web3.eth.personal.sign(signMessage, this.account, "");
+            // TODO Check the signature with the DB. If the signature match with the DB - log in the user.
+
+            // here we send the signature and account to the backend and if the account exists
+            // then show the casino balance.
+            // if no - add account and signature to the DB,
+            // associate newly created wallet to the account
+            // when the user deposit - get the money from the created account
+            // when they arrive - transfer them to the casino account and refresh the user's balance with the new money
+            // Withdraw sends from the casino account to the user wallet. Withdraw tax - 2 times transaction tax (Cover the deposit)
+
+            console.log(signature);
+            headers['SIGNATURE'] = signature;
+            headers['OPERATION'] = 'ADD_ACCOUNTS';
+            headers['ACCOUNTS_TO_ADD'] = this.accountsToAdd;
+    
+            const response = await this.http.get<any>("/services/admin",
+                { headers: new HttpHeaders(headers) }).toPromise();
+    
+            console.log(response.data);
+            this.result = response.data;
+        } catch (e: any) {
+            if (e && e.status) {
+                this.errorMessage = "Error: " + e.status;
+                if (e.message) {
+                    this.errorMessage += ", " + e.message;
+                }
+            } else {
+                this.errorMessage = "Error";
+            }
+            console.log(e);
+        }
+    }
   }

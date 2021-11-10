@@ -1,5 +1,7 @@
 package mypackage;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -17,9 +19,11 @@ public class HttpUtil {
 
     public static String ONLYONE_COOKIE = "onlyonecookie";
 
-    public static void postResponse(HttpServletResponse resp, String data) throws IOException {
+    public static ObjectMapper objectMapper = new ObjectMapper();
+
+    public static <T> void postResponse(HttpServletResponse resp, T data) throws IOException {
         PrintWriter writer = resp.getWriter();
-        writer.print("{\"data\": \"" + data + "\"}");
+        objectMapper.writeValue(writer, data);
     }
 
     public static String getCookie(HttpServletRequest req, String cookieValueToMatch) {

@@ -1,1 +1,8 @@
 <button (click)="login()">Login</button>
+<div>
+    NOTE: This is still an alpha version of the casino. If you encounter any issues please email us at 
+    <a href="mailto: support@onlyonefinance.com">support@onlyonefinance.com</a>.
+</div>
+<div *ngIf="errorMessage" style="color: red;">
+    {{errorMessage}}
+</div>

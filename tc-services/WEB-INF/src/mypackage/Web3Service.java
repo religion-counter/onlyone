@@ -1,6 +1,11 @@
 package mypackage;
 
+import com.onlyonefinance.ONLYONE;
+import global.Constants;
 import global.Locks;
+import global.OnlyoneGasProvider;
+import global.WalletUtil;
+import org.web3j.contracts.token.ERC20Interface;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.Web3jService;
@@ -27,6 +32,8 @@ public class Web3Service {
 
     private final Web3j _web3j;
 
+    private final ONLYONE _onlyone;
+
     private Web3Service() {
         LOG.info("Initializing Web3J service.");
         try {
@@ -35,28 +42,39 @@ public class Web3Service {
             _web3j = Web3j.build(service);
 
             LOG.info("Initialized web3j service: " + _web3j);
+
+            Credentials master = WalletUtil.getMasterWallet();
+            _onlyone = ONLYONE.load(Constants.ONLYONE_CONTRACT_ADDRESS, _web3j,
+                    master, OnlyoneGasProvider.INSTANCE);
         } catch (Throwable t) {
             LOG.log(Level.SEVERE, "Couldn't initialize Web3jService", t);
             throw t;
         }
     }
 
-    public String getBalanceWei(String wallet) {
+    public ONLYONE getOnlyone() {
+        return _onlyone;
+    }
+
+    public Web3j getWeb3j() {
+        return _web3j;
+    }
+
+    public String getBalanceWei(String wallet) throws Exception {
         synchronized (_locks.getLockForWallet(wallet)) {
             // send asynchronous requests to get balance
-            try {
-                EthGetBalance ethGetBalance = _web3j
-                        .ethGetBalance(wallet, DefaultBlockParameterName.LATEST)
-                        .sendAsync()
-                        .get();
+            EthGetBalance ethGetBalance = _web3j
+                    .ethGetBalance(wallet, DefaultBlockParameterName.LATEST)
+                    .sendAsync()
+                    .get();
 
-                BigInteger wei = ethGetBalance.getBalance();
-                return wei.toString();
-            } catch (Exception e) {
-                LOG.log(Level.SEVERE, "Couldn't get balance: ", e);
-            }
-            return "0";
+            BigInteger wei = ethGetBalance.getBalance();
+            return wei.toString();
         }
+    }
+
+    public String getTokenBalance() {
+        throw new RuntimeException("Not implemented yet");
     }
 
     public String sendFunds(Credentials fromWallet, String toWallet, BigDecimal amount) {

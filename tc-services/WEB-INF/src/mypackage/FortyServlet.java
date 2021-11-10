@@ -3,7 +3,6 @@ package mypackage;
 import data.Account;
 import data.DataService;
 import global.Locks;
-import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -37,13 +36,6 @@ public class FortyServlet extends HttpServlet {
         this._dataService = DataService.INSTANCE;
         this._locks = Locks.INSTANCE;
     }
-
-//    @VisibleForTesting
-//    FortyServlet(CookieService cookieService, DataService dataService, Locks locks) {
-//        this._cookieService = cookieService;
-//        this._dataService = dataService;
-//        this._locks = locks;
-//    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -111,6 +103,8 @@ public class FortyServlet extends HttpServlet {
             int chosenNumber = _secureRandom.nextInt(41);
             int winningMultiplier = playerWinningMultiplier(selectedBet, chosenNumber);
             BigDecimal amountWon = betAmountDecimal.multiply(new BigDecimal(winningMultiplier));
+            acc.amountBnbPlayedInCasino = acc.amountBnbPlayedInCasino.add(betAmountDecimal);
+            acc.amountBnbWonInCasino = acc.amountBnbWonInCasino.add(amountWon);
             acc.bnbBalance = acc.bnbBalance.subtract(betAmountDecimal);
             acc.bnbBalance = acc.bnbBalance.add(amountWon);
 
@@ -123,7 +117,7 @@ public class FortyServlet extends HttpServlet {
 
             // Sleep 1 second to delay the response.
             try {
-                Thread.currentThread().sleep(1000);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 LOG.log(Level.SEVERE, "Sleep was interrupted for wallet: " + wallet, e);
             }

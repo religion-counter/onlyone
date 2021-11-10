@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.logging.Logger;
 
 public class BalanceServlet extends HttpServlet {
@@ -42,7 +43,21 @@ public class BalanceServlet extends HttpServlet {
             }
 
             _balanceService.updateBalance(acc, resp);
-            HttpUtil.postResponse(resp, acc.bnbBalance.toString());
+            HttpUtil.postResponse(resp, new BalanceResponse(
+                    acc.bnbBalance,
+                    acc.onlyoneBalance));
+        }
+    }
+
+    static class BalanceResponse {
+        public BigDecimal bnbBalance;
+        public BigDecimal onlyoneBalance;
+
+        public BalanceResponse(
+                BigDecimal bnbBalance,
+                BigDecimal onlyoneBalance) {
+            this.bnbBalance = bnbBalance;
+            this.onlyoneBalance = onlyoneBalance;
         }
     }
 }

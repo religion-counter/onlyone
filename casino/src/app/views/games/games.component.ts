@@ -35,11 +35,15 @@ export class GamesComponent implements OnInit {
   betAmount = 0;
 
   get maxBetAmount(): number {
-    return Math.min(this.MAX_BET_AMOUNT, Number(this.auth.balance));
+    return Math.min(this.MAX_BET_AMOUNT, Number(this.auth.bnbBalance));
   }
 
-  get balance(): string {
-    return this.auth.balance;
+  get balance(): number | undefined {
+    return this.auth.bnbBalance;
+  }
+
+  get onlyoneBalance(): number | undefined {
+    return this.auth.onlyoneBalance;
   }
 
   async ngOnInit() {
@@ -98,7 +102,7 @@ export class GamesComponent implements OnInit {
     }
     
     const headers: any = {
-      WALLET: this.auth.wallet,
+      WALLET: this.auth.accountAddress,
       BET_AMOUNT: this.betAmount.toString(),
       TOKEN: this.auth.token,
       SELECTED_BET: this.selectedBet,
@@ -124,7 +128,7 @@ export class GamesComponent implements OnInit {
     }
     this.errorMessage = '';
     this.lastChosen = response[0];
-    this.auth.balance = response[1];
+    this.auth.onlyoneBalance = response[1];
     this.lastWin = response[2];
   }
 }

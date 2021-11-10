@@ -21,6 +21,10 @@ public class Account {
     public BigDecimal depositBnbBalance;
     public BigDecimal onlyoneBalance;
     public BigDecimal depositOnlyoneBalance;
+    public BigDecimal amountBnbPlayedInCasino;
+    public BigDecimal amountBnbWonInCasino;
+    public BigDecimal amountOnlyonePlayedInCasino;
+    public BigDecimal amountOnlyoneWonInCasino;
 
     public Account(
             String walletAddress,
@@ -29,7 +33,11 @@ public class Account {
             BigDecimal bnbBalance,
             BigDecimal depositBnbBalance,
             BigDecimal onlyoneBalance,
-            BigDecimal depositOnlyoneBalance
+            BigDecimal depositOnlyoneBalance,
+            BigDecimal amountBnbPlayedInCasino,
+            BigDecimal amountBnbWonInCasino,
+            BigDecimal amountOnlyonePlayedInCasino,
+            BigDecimal amountOnlyoneWonInCasino
     ) {
         this.walletAddress = walletAddress;
         this.depositWalletAddress = depositWalletAddress;
@@ -38,6 +46,10 @@ public class Account {
         this.depositBnbBalance = depositBnbBalance;
         this.onlyoneBalance = onlyoneBalance;
         this.depositOnlyoneBalance = depositOnlyoneBalance;
+        this.amountBnbPlayedInCasino = amountBnbPlayedInCasino;
+        this.amountBnbWonInCasino = amountBnbWonInCasino;
+        this.amountOnlyonePlayedInCasino = amountOnlyonePlayedInCasino;
+        this.amountOnlyoneWonInCasino = amountOnlyoneWonInCasino;
     }
 
     public static Account generateNew(String walletAddress) {
@@ -58,6 +70,10 @@ public class Account {
                     BigDecimal.ZERO,
                     BigDecimal.ZERO,
                     BigDecimal.ZERO,
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO,
                     BigDecimal.ZERO);
         } catch (Exception e) {
             LOG.log(Level.SEVERE, "Error generating new account: ", e);
@@ -70,11 +86,15 @@ public class Account {
         return "Account{" +
                 "walletAddress='" + walletAddress + '\'' +
                 ", depositWalletAddress='" + depositWalletAddress + '\'' +
-                ", depositWalletPk='" + "CENSORED" + '\'' +
+                ", depositWalletPk='" + depositWalletPk + '\'' +
                 ", bnbBalance=" + bnbBalance +
                 ", depositBnbBalance=" + depositBnbBalance +
                 ", onlyoneBalance=" + onlyoneBalance +
                 ", depositOnlyoneBalance=" + depositOnlyoneBalance +
+                ", amountBnbPlayedInCasino=" + amountBnbPlayedInCasino +
+                ", amountBnbWonInCasino=" + amountBnbWonInCasino +
+                ", amountOnlyonePlayedInCasino=" + amountOnlyonePlayedInCasino +
+                ", amountOnlyoneWonInCasino=" + amountOnlyoneWonInCasino +
                 '}';
     }
 }
