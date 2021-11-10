@@ -1,0 +1,42 @@
+Deploy and Interact with Smart Contracts
+Working with smart contracts and Java smart contract wrappers¶
+Web3j can auto-generate smart contract wrapper code to deploy and interact with smart contracts without leaving the JVM.
+
+To generate the wrapper code, compile your smart contract:
+
+
+$ solc <contract>.sol --bin --abi --optimize -o <output-dir>/
+Then generate the wrapper code using the Web3j CLI:
+
+
+web3j generate solidity -b /path/to/<smart-contract>.bin -a /path/to/<smart-contract>.abi -o /path/to/src/main/java -p com.your.organisation.name
+Now you can create and deploy your smart contract:
+
+
+Web3j web3 = Web3j.build(new HttpService());  // defaults to http://localhost:8545/
+Credentials credentials = WalletUtils.loadCredentials("password", "/path/to/walletfile");
+
+YourSmartContract contract = YourSmartContract.deploy(
+        <web3j>, <credentials>,
+        GAS_PRICE, GAS_LIMIT,
+        <param1>, ..., <paramN>).send();  // constructor params
+Or use an existing contract:
+
+
+YourSmartContract contract = YourSmartContract.load(
+        "0x<address>|<ensName>", <web3j>, <credentials>, GAS_PRICE, GAS_LIMIT);
+To transact with a smart contract:
+
+
+TransactionReceipt transactionReceipt = contract.someMethod(
+             <param1>,
+             ...).send();
+To call a smart contract:
+
+
+Type result = contract.someMethod(<param1>, ...).send();
+For more information refer to Solidity smart contract wrappers.
+
+Download solidity compilator from https://github.com/ethereum/solidity/releases/tag/v0.6.12
+
+Download web3j cli: https://github.com/web3j/web3j-cli/releases/tag/v1.4.1
