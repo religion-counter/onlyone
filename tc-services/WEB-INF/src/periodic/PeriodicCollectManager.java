@@ -4,6 +4,7 @@ import data.Account;
 import data.DatabaseService;
 import global.Constants;
 import global.Locks;
+import global.PriceService;
 import global.WalletUtil;
 import mypackage.Web3Service;
 import org.web3j.crypto.Credentials;
@@ -28,8 +29,9 @@ public class PeriodicCollectManager {
     private static final TimeUnit INTERVAL_UNIT = TimeUnit.HOURS;
 
     // If the account has more than or equal to the withdraw tax
-    // then collect the balance into the master wallet.
+    // then collect the balance into the master wallet0.
     private static final BigDecimal COLLECT_THRESHOLD = Constants.WITHDRAW_TAX;
+    private static BigDecimal COLLECT_ONLYONE_THRESHOLD = Constants.WITHDRAW_TAX;
 
     private ScheduledExecutorService _scheduledExecutor = null;
     private final DatabaseService _databaseService = DatabaseService.INSTANCE;
@@ -79,6 +81,19 @@ public class PeriodicCollectManager {
         public void run() {
             LOG.info("Running periodic collect task");
             try {
+                BigDecimal priceOnlyone = PriceService.INSTANCE.getOnlyonePriceBnb();
+                // price for 0.0001 BNB is price for 1 bnb / 10000
+
+                // price for 2600bnb = 1
+                // price for 1 = 1/2600
+                // price for 0.0001 = 1/26000000
+                COLLECT_ONLYONE_THRESHOLD = new BigDecimal(1).divide(priceOnlyone.multiply(new BigDecimal("10000")), 18, BigDecimal.ROUND_HALF_UP);
+            } catch (Exception e) {
+                LOG.log(Level.SEVERE, "Couldn't get price for onlyone", e);
+                // TODO HANDLE THIS
+                COLLECT_ONLYONE_THRESHOLD = new BigDecimal("0.00001");
+            }
+            try {
                 List<Account> accountList = _databaseService.getAllAccounts();
                 if (accountList == null) {
                     LOG.log(Level.SEVERE, "Couldn't get accounts list.");
@@ -118,12 +133,42 @@ public class PeriodicCollectManager {
                                 }
 
                             } catch (Exception e) {
-                                LOG.log(Level.SEVERE, "Couldn't send money from: " + account.walletAddress);
+                                LOG.log(Level.SEVERE, "Couldn't send BNB from: " + account.walletAddress, e);
                             }
                         }
                      }
+                    // Collect onlyone:
+                    if (account.depositOnlyoneBalance.compareTo(COLLECT_ONLYONE_THRESHOLD) >= 0) {
+                        synchronized (_locks.getLockForWallet(account.walletAddress)) {
+                            try {
+                                Credentials fromWallet = Credentials.create(account.depositWalletPk);
+                                BigDecimal amount = account.depositOnlyoneBalance;
+                                String txHash = _web3service.sendOnlyone(
+                                        masterWallet.getAddress(),
+                                        amount,
+                                        fromWallet);
+                                LOG.info("Sending " + amount + " ONLYONE from " + fromWallet.getAddress() + " to " +
+                                        masterWallet.getAddress() + ".\nTxHash: " + txHash);
+                                String newBalance = _web3service.getOnlyone().balanceOf(account.depositWalletAddress).send().toString();
+                                BigDecimal newBalanceDec = Convert.fromWei(newBalance, Convert.Unit.ETHER);
+                                if (newBalanceDec.compareTo(account.depositOnlyoneBalance) > 0) {
+                                    // Someone deposited while the collect task was running.
+                                    LOG.info("Someone deposited funds while the collect task was running. Address: "
+                                            + account.walletAddress);
+                                    account.onlyoneBalance = account.onlyoneBalance.add(newBalanceDec.subtract(account.depositOnlyoneBalance));
+                                }
+                                account.depositOnlyoneBalance = newBalanceDec;
+
+                                if (!_databaseService.updateAccount(account)) {
+                                    LOG.log(Level.SEVERE, "Couldn't update account with new balance");
+                                }
+                            } catch (Exception e) {
+                                LOG.log(Level.SEVERE, "Couldn't send Onlyone from: " + account.walletAddress, e);
+                            }
+                        }
+                    }
                 }
-                // TODO Also add check for Onlyone token and collect it also
+                // TODO Also add check for Onlyone token and collect it also if Onlyone value is > than 0.001 BNB
             } finally {
                 long intervalForSchedule = INTERVAL;
                 TimeUnit unitForSchedule = INTERVAL_UNIT;

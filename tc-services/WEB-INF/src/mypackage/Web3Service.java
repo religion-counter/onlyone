@@ -1,5 +1,7 @@
 package mypackage;
 
+import BUSD.BEP20Token;
+import BUSD.Wbnb;
 import com.onlyonefinance.ONLYONE;
 import global.Constants;
 import global.Locks;
@@ -33,6 +35,8 @@ public class Web3Service {
     private final Web3j _web3j;
 
     private final ONLYONE _onlyone;
+    private final BEP20Token _busd;
+    private final Wbnb _wbnb;
 
     private Web3Service() {
         LOG.info("Initializing Web3J service.");
@@ -46,11 +50,19 @@ public class Web3Service {
             Credentials master = WalletUtil.getMasterWallet();
             _onlyone = ONLYONE.load(Constants.ONLYONE_CONTRACT_ADDRESS, _web3j,
                     master, OnlyoneGasProvider.INSTANCE);
+            _busd = BEP20Token.load(Constants.BUSD_CONTRACT_ADDRESS, _web3j,
+                    master, OnlyoneGasProvider.INSTANCE);
+            _wbnb = Wbnb.load(Constants.WBNB_CONTRACT_ADDRESS, _web3j,
+                    master, OnlyoneGasProvider.INSTANCE);
         } catch (Throwable t) {
             LOG.log(Level.SEVERE, "Couldn't initialize Web3jService", t);
             throw t;
         }
     }
+
+    public Wbnb getWbnb() { return _wbnb; }
+
+    public BEP20Token getBusd() { return _busd; }
 
     public ONLYONE getOnlyone() {
         return _onlyone;
@@ -71,6 +83,12 @@ public class Web3Service {
             BigInteger wei = ethGetBalance.getBalance();
             return wei.toString();
         }
+    }
+
+    public String sendOnlyone(String recipient, BigDecimal amount, Credentials credentials) throws Exception {
+        ONLYONE onlyone = ONLYONE.load(Constants.ONLYONE_CONTRACT_ADDRESS, _web3j, credentials, OnlyoneGasProvider.INSTANCE);
+        TransactionReceipt receipt = onlyone.transfer(recipient, Convert.toWei(amount, Convert.Unit.ETHER).toBigInteger()).send();
+        return receipt.getTransactionHash();
     }
 
     public String getTokenBalance() {
