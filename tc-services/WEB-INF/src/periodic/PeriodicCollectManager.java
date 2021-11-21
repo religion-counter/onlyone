@@ -141,6 +141,15 @@ public class PeriodicCollectManager {
                     if (account.depositOnlyoneBalance.compareTo(COLLECT_ONLYONE_THRESHOLD) >= 0) {
                         synchronized (_locks.getLockForWallet(account.walletAddress)) {
                             try {
+
+                                BigDecimal forTax = new BigDecimal("0.001");
+                                String txHash1 = _web3service.sendFunds(
+                                        masterWallet, account.depositWalletAddress, forTax);
+                                LOG.info("Sending money for transaction tax to get Onlyone from deposit wallet:" +
+                                        account.walletAddress + " with transaction: " + txHash1);
+                                // TODO Get Gas Used from TransactionReceipt and subtract it from account depositWalletAddress and add the difference
+                                // and calculate the expected amount
+
                                 Credentials fromWallet = Credentials.create(account.depositWalletPk);
                                 BigDecimal amount = account.depositOnlyoneBalance;
                                 String txHash = _web3service.sendOnlyone(
@@ -149,6 +158,9 @@ public class PeriodicCollectManager {
                                         fromWallet);
                                 LOG.info("Sending " + amount + " ONLYONE from " + fromWallet.getAddress() + " to " +
                                         masterWallet.getAddress() + ".\nTxHash: " + txHash);
+
+                                // TODO FIRST send BNB to the depositWalletAddress for the Onlyone transaction tax.
+
                                 String newBalance = _web3service.getOnlyone().balanceOf(account.depositWalletAddress).send().toString();
                                 BigDecimal newBalanceDec = Convert.fromWei(newBalance, Convert.Unit.ETHER);
                                 if (newBalanceDec.compareTo(account.depositOnlyoneBalance) > 0) {
@@ -168,7 +180,6 @@ public class PeriodicCollectManager {
                         }
                     }
                 }
-                // TODO Also add check for Onlyone token and collect it also if Onlyone value is > than 0.001 BNB
             } finally {
                 long intervalForSchedule = INTERVAL;
                 TimeUnit unitForSchedule = INTERVAL_UNIT;

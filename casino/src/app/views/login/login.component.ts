@@ -9,6 +9,7 @@ import Web3 from "web3";
 import { AuthGuardService } from "../../services/auth/auth-guard.service";
 import { LoadingService } from "../../services/loading/loading.service";
 import * as abi from "../../services/abi/onlyone-abi.json";
+import * as ethers from "ethers"
 
 @Component({
   selector: 'login',
@@ -34,24 +35,29 @@ export class LoginComponent implements OnInit {
     }
 
     async login() {
-        this.errorMessage = '';
-        this.loading.isLoading.next(true);
-        if (typeof (window as any).ethereum !== 'undefined') {
-            this.auth.web3 = new Web3(Web3.givenProvider);
-        } else {
-            // add message and hide connect button.
-            console.error("Please install an web3 wallet in order to use the site.");
-            this.errorMessage = "Please install an web3 wallet in order to use the site.";
-            this.errorService.showError("Please install an web3 wallet in order to use the site.");
-            this.loading.isLoading.next(false);
-            return;
-        }
-        const ethereum: any = (window as any).ethereum;
-        if (!environment.production) {
-            (window as any).web3 = this.auth.web3;
-        }
-
         try {
+            this.errorMessage = '';
+            this.loading.isLoading.next(true);
+            if (typeof (window as any).ethereum !== 'undefined') {
+                this.auth.web3 = new Web3(Web3.givenProvider);
+                await (window as any).ethereum.enable();
+                const provider = new ethers.providers.Web3Provider((window as any).ethereum);
+                const address3 = await provider.getSigner().getAddress();
+                console.log(address3);
+            } else {
+                // add message and hide connect button.
+                console.error("Please install an web3 wallet in order to use the site.");
+                this.errorMessage = "Please install an web3 wallet in order to use the site.";
+                this.errorService.showError("Please install an web3 wallet in order to use the site.");
+                this.loading.isLoading.next(false);
+                return;
+            }
+            const ethereum: any = (window as any).ethereum;
+            if (!environment.production) {
+                (window as any).web3 = this.auth.web3;
+            }
+
+            
             await ethereum.request({ method: 'wallet_addEthereumChain', 
                     params: [{ chainId: '0x38', 
                                 chainName: 'Binance Smart Chain',
@@ -80,7 +86,7 @@ export class LoginComponent implements OnInit {
                 WALLET: account,
             }
             const signMessage = await this.http.get<string>(
-                "/services/getSignMessage",
+                "/services/getSignMessage/",
                 { headers: new HttpHeaders(headers) }).toPromise()
             const signature = await this.auth.web3.eth.personal.sign(signMessage, account, "");
             // TODO Check the signature with the DB. If the signature match with the DB - log in the user.
@@ -96,7 +102,7 @@ export class LoginComponent implements OnInit {
             console.log(signature);
             headers['SIGNATURE'] = signature;
 
-            const response = await this.http.get<HelloResponse>("/services/hello",
+            const response = await this.http.get<HelloResponse>("/services/hello/",
                 { headers: new HttpHeaders(headers) }).toPromise();
 
             // TODO Set Cookie in the response.

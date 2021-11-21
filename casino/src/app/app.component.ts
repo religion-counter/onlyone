@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthGuardService } from './services/auth/auth-guard.service';
 
@@ -7,7 +7,7 @@ import { AuthGuardService } from './services/auth/auth-guard.service';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
 
   routerLinks = [
     ['/account', "Account"],
@@ -17,9 +17,12 @@ export class AppComponent {
   activatedRoute = this.routerLinks[0][0];
 
   constructor(
-    private auth: AuthGuardService,
+    public auth: AuthGuardService,
     private router: Router
   ) {}
+
+  ngOnInit() {
+  }
 
   title = 'Onlyone Casino';
 

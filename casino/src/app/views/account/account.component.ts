@@ -36,8 +36,8 @@ export class AccountComponent implements OnInit {
 
   depositBnbTxHash: string | undefined;
 
-  get onlyoneBalance(): string | undefined {
-    return this.auth.onlyoneBalance?.toFixed(18);
+  get onlyoneBalance() {
+    return this.auth.onlyoneBalance;
   }
 
   get maxDepositOnlyoneAmount(): number | undefined {

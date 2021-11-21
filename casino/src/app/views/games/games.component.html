@@ -41,6 +41,8 @@
         (click)="singleNumber(i)"
         [ngStyle]="getStyle(NUMBER_PREFIX + i)">{{i}}</button>
 </div>
+<div>Casino account BNB balance: {{balance}} BNB</div>
+<div>Casino account ONLYONE balance: {{onlyoneBalance}} ONLYONE</div>
 <div>
     <mat-form-field >
       <mat-label>Place your bet (up to {{maxBetAmount}} BNB). Minimum bet is {{MIN_BET_AMOUNT}} BNB.</mat-label>
@@ -60,6 +62,35 @@
     Error playing forty game: {{errorMessage}}
 </div>
 <div>
-    NOTE: This is still an alpha version of the Onlyone Casino. Soon we will add an option to
-    deposit, withdraw and bet with Onlyone token and we will increase the maximum bet amount.
+    <mat-form-field >
+      <mat-label>
+        Place your bet (up to {{maxOnlyoneBetAmount | number : '1.2-16'}} ONLYONE).
+        Minimum bet is {{MIN_ONLYONE_BET_AMOUNT | number : '1.2-16'}} ONLYONE.
+      </mat-label>
+      <input matInput 
+          type="number" 
+          min="0"
+          [max]="maxOnlyoneBetAmount"
+          step="0.00001"
+          [(ngModel)]="betOnlyoneAmount">
+    </mat-form-field>
+    <button (click)="startOnlyoneGame()">Start ONLYONE Game</button>
+</div>
+<div *ngIf="lastOnlyoneChosen">
+    <h3>
+        The algorithm chose: {{lastOnlyoneChosen}}.
+    </h3>
+    <h3 *ngIf="showLostMessage">
+        Unfortunately you lost your bet.
+    </h3>
+    <h3 *ngIf="!showLostMessage">
+        You won {{lastOnlyoneWin}} ONLYONE.
+    </h3>
+</div>
+<!-- TODO USE NOTIFICATION SERVICE FOR ERRORS -->
+<div>
+    NOTE: This is still an alpha version of the Onlyone Casino.
+    If you encounter any issues please email us at 
+    <a href="mailto: support@onlyonefinance.com">support@onlyonefinance.com</a>
+    .
 </div>
