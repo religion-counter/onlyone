@@ -23,23 +23,22 @@ contract SimplePool {
         uint token2VirtualAmount;
     }
 
-    mapping(address => uint) public _poolIdByOwner;
     mapping(uint => address) public _poolOwnerById;
+    mapping(uint => bool) public _lockedPools;
+    mapping(uint => bool) public _emptyPools;
 
-    mapping(uint => Pool) _pools;
-    uint _poolsCount = 0;
-    uint _maxTxPercent = 15;
-    // Pool[] public _pools = new Pool[](0);
+    mapping(uint => Pool) public _pools;
+    uint public _poolsCount = 0;
+    uint public _maxTxPercent = 15;
 
     constructor() {
 
     }
 
-    function createPool(IERC20 token1, IERC20 token2, uint token1Amount, uint matchingPriceInToken2) payable external {
+    function createPool(IERC20 token1, IERC20 token2, uint token1Amount, uint matchingPriceInToken2) external {
         // matchingPriceInToken2 is the requested initial amount for token2 that match token1
         uint poolId = _poolsCount;
         _poolsCount += 1;
-        _poolIdByOwner[msg.sender] = poolId;
         _poolOwnerById[poolId] = msg.sender;
         token1.transferFrom(msg.sender, address(this), token1Amount);
         _pools[poolId].token1 = token1;
@@ -55,7 +54,9 @@ contract SimplePool {
         uint poolId, 
         uint tokenToSellAmount, 
         uint minReceiveTokenToBuyAmount
-    ) payable external returns (uint) { // returns the amount of token bought.
+    ) payable external returns (uint) { 
+        require(!_emptyPools[poolId], "Pool is empty");
+        // returns the amount of token bought.
         // tokenToSell must be the same as one of the tokens in the _pools[poolId]
         // tokenToBuy must be the same as one of the tokens in the pool
         Pool storage pool = _pools[poolId];
@@ -64,7 +65,7 @@ contract SimplePool {
         if (tokenToBuy == pool.token1) {
             uint amountOut = Math.mulDiv(pool.token1Amount, tokenToSellAmount, pool.token2Amount + pool.token2VirtualAmount);
             amountOut = Math.min(amountOut, Math.mulDiv(pool.token1Amount, _maxTxPercent, 100));
-            require(pool.token2.allowance(msg.sender, address(this)) >= tokenToSellAmount, "trying to sell more than you have");
+            require(pool.token2.allowance(msg.sender, address(this)) >= tokenToSellAmount, "trying to sell more than allowance");
             require(minReceiveTokenToBuyAmount <= amountOut,"minReceive is less than calcualted amount");
             // complete the transaction now
             require(pool.token2.transferFrom(msg.sender, address(this), tokenToSellAmount), "cannot transfer tokenToSellAmount");
@@ -91,15 +92,43 @@ contract SimplePool {
         return 0;
     }
 
-    // TODO Add sell for token2 and vice versa (buy for token2 and sell for token1)
+    function getAllTokensFromPool(uint poolId) external {
+        require(_poolsCount > poolId, "invalid pool id");
+        require(!_lockedPools[poolId], "pool is locked");
+        require(!_emptyPools[poolId], "pool is empty");
+        require(_poolOwnerById[poolId] == msg.sender, "only the pool creator can empty pool");
+        Pool storage pool = _pools[poolId];
+        pool.token1.transferFrom(address(this), msg.sender, pool.token1Amount);
+        pool.token1Amount = 0;
+        pool.token2.transferFrom(address(this), msg.sender, pool.token2Amount);
+        pool.token2Amount = 0;
+        pool.token2VirtualAmount = 0;
+        _emptyPools[poolId] = true;
+    }
+
+    function lockPool(uint poolId) external returns (bool) {
+        require(!_lockedPools[poolId], "pool is already locked");
+        require(_poolsCount > poolId, "invalid pool id");
+        require(_poolOwnerById[poolId] == msg.sender, "only the pool creator can lock pool");
+        _lockedPools[poolId] = true;
+        return true;
+    }
+
+    function isPoolLocked(uint poolId) external view returns (bool) {
+        return _lockedPools[poolId];
+    }
 
     function getPools() external view returns (Pool[] memory) {
-        Pool[] memory pools = new Pool[](_poolsCount);
-        for (uint i = 0; i < _poolsCount; ++i) {
+       Pool[] memory pools = new Pool[](_poolsCount);
+       for (uint i = 0; i < _poolsCount; ++i) {
             Pool storage pool = _pools[i];
             pools[i] = pool;
         }
         return pools;
+    }
+
+    function getPool(uint poolId) external view returns (Pool memory) {
+        return _pools[poolId];
     }
 }
 /*
