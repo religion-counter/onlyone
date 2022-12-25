@@ -21,6 +21,10 @@ contract SimplePool {
         uint token1Amount;
         uint token2Amount;
         uint token2VirtualAmount;
+        // For example when we want to use a pool for limit sell then maxtxpercent can be 100%
+        // so someone can buy all the bitcoin/eth for sell with one transaction.
+        // For new tokens that are only traded in one pool it can be 1% or 10% or 50%.
+        uint maxPercentPerTransaction;
     }
 
     address[] public _poolOwnerById;
@@ -28,7 +32,6 @@ contract SimplePool {
     mapping(uint => bool) public _emptyPools;
 
     Pool[] public _pools;
-    uint public _maxTxPercent = 15;
 
     // when we sync the state of all pools (from indexed DB node) we get the current number of all transactions
     // then we get only the latest transactions (that are not indexed) and sync the pools only from them
@@ -39,7 +42,9 @@ contract SimplePool {
 
     }
 
-    function createPool(IERC20 token1, IERC20 token2, uint token1Amount, uint matchingPriceInToken2) external {
+    function createPool(IERC20 token1, IERC20 token2,
+            uint token1Amount, uint matchingPriceInToken2,
+            uint maxPercentPerTransaction) external {
         // matchingPriceInToken2 is the requested initial amount for token2 that match token1
         uint poolId = _pools.length;
         _allTransactionsPoolIds.push(poolId);
@@ -51,6 +56,7 @@ contract SimplePool {
         _pools[poolId].initialToken1Amount = token1Amount;
         _pools[poolId].token2Amount = 0;
         _pools[poolId].token2VirtualAmount = matchingPriceInToken2;
+        _pools[poolId].maxPercentPerTransaction = maxPercentPerTransaction;
     }
 
     function exchangeToken(
@@ -68,7 +74,7 @@ contract SimplePool {
         _allTransactionsPoolIds.push(poolId);
         if (tokenToBuy == pool.token1) {
             uint amountOut = Math.mulDiv(pool.token1Amount, tokenToSellAmount, pool.token2Amount + pool.token2VirtualAmount);
-            amountOut = Math.min(amountOut, Math.mulDiv(pool.token1Amount, _maxTxPercent, 100));
+            amountOut = Math.min(amountOut, Math.mulDiv(pool.token1Amount, pool.maxPercentPerTransaction, 100));
             require(pool.token2.allowance(msg.sender, address(this)) >= tokenToSellAmount, "trying to sell more than allowance");
             require(minReceiveTokenToBuyAmount <= amountOut,"minReceive is less than calcualted amount");
             // complete the transaction now
@@ -82,7 +88,7 @@ contract SimplePool {
             require(pool.initialToken1Amount > pool.token1Amount, "must have more than initial token1 amount");
             // optionally if (pool.token1Amount + tokenToSellAmount > pool.initialToken1Amount) then someone is dumping more than initial amount, we can burn
             uint amountOut = Math.mulDiv(tokenToSellAmount, pool.token2Amount, pool.initialToken1Amount - pool.token1Amount);
-            amountOut = Math.min(amountOut, Math.mulDiv(pool.token2Amount, _maxTxPercent, 100));
+            amountOut = Math.min(amountOut, Math.mulDiv(pool.token2Amount, pool.maxPercentPerTransaction, 100));
             require(pool.token1.allowance(msg.sender, address(this)) >= tokenToSellAmount, "trying to sell more than allowance");
             require(minReceiveTokenToBuyAmount <= amountOut,"minReceive is less than calcualted amount");
             // complete the transaction now
@@ -126,6 +132,15 @@ contract SimplePool {
         require(!_lockedPools[poolId], "pool is locked");
         require(_poolOwnerById[poolId] == msg.sender, "only the pool owner can change ownership");
         _poolOwnerById[poolId] = newPoolOwner;
+        _allTransactionsPoolIds.push(poolId);
+        return true;
+    }
+
+    function changePoolMaxPercentPerTransaction(uint poolId, uint newMaxPercentPerTransaction) external returns (bool) {
+        require(poolId < _pools.length, "invalid poolId");
+        require(!_lockedPools[poolId], "pool is locked");
+        require(_poolOwnerById[poolId] == msg.sender, "only the pool owner can change newMaxPercentPerTransaction");
+        _pools[poolId].maxPercentPerTransaction = newMaxPercentPerTransaction;
         _allTransactionsPoolIds.push(poolId);
         return true;
     }
