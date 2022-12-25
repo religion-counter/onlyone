@@ -4,13 +4,13 @@ pragma solidity ^0.8.7;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-//Workflow
-// deploy weth9
+// Workflow
+// deploy usd token
 // deploy sampletoken
-// deploy sampletokenethpool
-// deposit weth
-// approve weth for spending by sampletokenethpool
-//
+// deploy simplepool
+// deposit sampletoken
+// approve sampletoken for spending by simplepool
+// create pool with sampletoken and matching usd token
 
 contract SimplePool {
 
@@ -100,7 +100,7 @@ contract SimplePool {
         require(_pools.length > poolId, "invalid pool id");
         require(!_lockedPools[poolId], "pool is locked");
         require(!_emptyPools[poolId], "pool is empty");
-        require(_poolOwnerById[poolId] == msg.sender, "only the pool creator can empty pool");
+        require(_poolOwnerById[poolId] == msg.sender, "only the pool owner can empty pool");
         _allTransactionsPoolIds.push(poolId);
         Pool storage pool = _pools[poolId];
         pool.token1.transferFrom(address(this), msg.sender, pool.token1Amount);
@@ -114,9 +114,19 @@ contract SimplePool {
     function lockPool(uint poolId) external returns (bool) {
         require(!_lockedPools[poolId], "pool is already locked");
         require(_pools.length > poolId, "invalid pool id");
-        require(_poolOwnerById[poolId] == msg.sender, "only the pool creator can lock pool");
+        require(_poolOwnerById[poolId] == msg.sender, "only the pool owner can lock pool");
         _allTransactionsPoolIds.push(poolId);
         _lockedPools[poolId] = true;
+        return true;
+    }
+
+    // if owner gets compromised and is fast enough or if you want to make 0 address the owner.
+    function changeOwner(uint poolId, address newPoolOwner) external returns (bool) {
+        require(poolId < _pools.length, "invalid poolId");
+        require(!_lockedPools[poolId], "pool is locked");
+        require(_poolOwnerById[poolId] == msg.sender, "only the pool owner can change ownership");
+        _poolOwnerById[poolId] = newPoolOwner;
+        _allTransactionsPoolIds.push(poolId);
         return true;
     }
 
