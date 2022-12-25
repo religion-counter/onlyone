@@ -140,6 +140,7 @@ contract SimplePool {
         require(poolId < _pools.length, "invalid poolId");
         require(!_lockedPools[poolId], "pool is locked");
         require(_poolOwnerById[poolId] == msg.sender, "only the pool owner can change newMaxPercentPerTransaction");
+        require(newMaxPercentPerTransaction <= 100 && newMaxPercentPerTransaction > 0, "invalid max percent per transaction");
         _pools[poolId].maxPercentPerTransaction = newMaxPercentPerTransaction;
         _allTransactionsPoolIds.push(poolId);
         return true;
