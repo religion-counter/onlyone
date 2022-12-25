@@ -23,13 +23,17 @@ contract SimplePool {
         uint token2VirtualAmount;
     }
 
-    mapping(uint => address) public _poolOwnerById;
+    address[] public _poolOwnerById;
     mapping(uint => bool) public _lockedPools;
     mapping(uint => bool) public _emptyPools;
 
-    mapping(uint => Pool) public _pools;
-    uint public _poolsCount = 0;
+    Pool[] public _pools;
     uint public _maxTxPercent = 15;
+
+    // when we sync the state of all pools (from indexed DB node) we get the current number of all transactions
+    // then we get only the latest transactions (that are not indexed) and sync the pools only from them
+    // array of the pool ids of all transactions
+    uint[] _allTransactionsPoolIds;
 
     constructor() {
 
@@ -37,11 +41,11 @@ contract SimplePool {
 
     function createPool(IERC20 token1, IERC20 token2, uint token1Amount, uint matchingPriceInToken2) external {
         // matchingPriceInToken2 is the requested initial amount for token2 that match token1
-        uint poolId = _poolsCount;
-        _poolsCount += 1;
-        _poolOwnerById[poolId] = msg.sender;
+        uint poolId = _pools.length;
+        _allTransactionsPoolIds.push(poolId);
+        _poolOwnerById.push(msg.sender);
         token1.transferFrom(msg.sender, address(this), token1Amount);
-        _pools[poolId].token1 = token1;
+        _pools.push().token1 = token1;
         _pools[poolId].token2 = token2;
         _pools[poolId].token1Amount = token1Amount;
         _pools[poolId].initialToken1Amount = token1Amount;
@@ -61,7 +65,7 @@ contract SimplePool {
         // tokenToBuy must be the same as one of the tokens in the pool
         Pool storage pool = _pools[poolId];
         require(tokenToBuy == pool.token1 || tokenToBuy == pool.token2, "trying to buy from wrong pool");
-        // TODO extract the following in function and call depending which is token1 and token2
+        _allTransactionsPoolIds.push(poolId);
         if (tokenToBuy == pool.token1) {
             uint amountOut = Math.mulDiv(pool.token1Amount, tokenToSellAmount, pool.token2Amount + pool.token2VirtualAmount);
             amountOut = Math.min(amountOut, Math.mulDiv(pool.token1Amount, _maxTxPercent, 100));
@@ -76,7 +80,7 @@ contract SimplePool {
         } else if (tokenToBuy == pool.token2) {
             require(pool.token2Amount > 0, "zero amount of token for buy in pool");
             require(pool.initialToken1Amount > pool.token1Amount, "must have more than initial token1 amount");
-            // TODO CALCULATE THIS ON PAPER
+            // optionally if (pool.token1Amount + tokenToSellAmount > pool.initialToken1Amount) then someone is dumping more than initial amount, we can burn
             uint amountOut = Math.mulDiv(tokenToSellAmount, pool.token2Amount, pool.initialToken1Amount - pool.token1Amount);
             amountOut = Math.min(amountOut, Math.mulDiv(pool.token2Amount, _maxTxPercent, 100));
             require(pool.token1.allowance(msg.sender, address(this)) >= tokenToSellAmount, "trying to sell more than allowance");
@@ -93,10 +97,11 @@ contract SimplePool {
     }
 
     function getAllTokensFromPool(uint poolId) external {
-        require(_poolsCount > poolId, "invalid pool id");
+        require(_pools.length > poolId, "invalid pool id");
         require(!_lockedPools[poolId], "pool is locked");
         require(!_emptyPools[poolId], "pool is empty");
         require(_poolOwnerById[poolId] == msg.sender, "only the pool creator can empty pool");
+        _allTransactionsPoolIds.push(poolId);
         Pool storage pool = _pools[poolId];
         pool.token1.transferFrom(address(this), msg.sender, pool.token1Amount);
         pool.token1Amount = 0;
@@ -108,8 +113,9 @@ contract SimplePool {
 
     function lockPool(uint poolId) external returns (bool) {
         require(!_lockedPools[poolId], "pool is already locked");
-        require(_poolsCount > poolId, "invalid pool id");
+        require(_pools.length > poolId, "invalid pool id");
         require(_poolOwnerById[poolId] == msg.sender, "only the pool creator can lock pool");
+        _allTransactionsPoolIds.push(poolId);
         _lockedPools[poolId] = true;
         return true;
     }
@@ -118,10 +124,36 @@ contract SimplePool {
         return _lockedPools[poolId];
     }
 
-    function getPools() external view returns (Pool[] memory) {
-       Pool[] memory pools = new Pool[](_poolsCount);
-       for (uint i = 0; i < _poolsCount; ++i) {
-            Pool storage pool = _pools[i];
+    function getPoolsCount() external view returns (uint) {
+        return _pools.length;
+    }
+
+    // Get pools from start index to end index [startPoolIndex, ..., endPoolIndex)
+    // start included, end not included
+    function getPools(uint startPoolIndex, uint endPoolIndex) external view returns (Pool[] memory) {
+       require(endPoolIndex > startPoolIndex && endPoolIndex <= _pools.length, "invalid indexes");
+       Pool[] memory pools = new Pool[](endPoolIndex - startPoolIndex);
+       for (uint i = startPoolIndex; i < endPoolIndex; ++i) {
+            pools[i - startPoolIndex] = _pools[i];
+        }
+        return pools;
+    }
+    
+    // till end
+    function getPoolsFrom(uint startPoolIndex) external view returns (Pool[] memory) {
+       require(startPoolIndex < _pools.length, "invalid index");
+       Pool[] memory pools = new Pool[](_pools.length - startPoolIndex);
+       for (uint i = startPoolIndex; i < _pools.length; ++i) {
+            pools[i - startPoolIndex] = _pools[i];
+        }
+        return pools;
+    }
+
+    // Get pools specified in indexes array
+    function getPools(uint[] memory indexes) external view returns (Pool[] memory) {
+        Pool[] memory pools = new Pool[](indexes.length);
+        for (uint i = 0; i < indexes.length; ++i) {
+            Pool storage pool = _pools[indexes[i]];
             pools[i] = pool;
         }
         return pools;
@@ -130,7 +162,33 @@ contract SimplePool {
     function getPool(uint poolId) external view returns (Pool memory) {
         return _pools[poolId];
     }
+
+    function getTransactionsCount() external view returns (uint) {
+        return _allTransactionsPoolIds.length;
+    }
+
+    // [startPoolIndex, ..., endPoolIndex)
+    // start included, end not included
+    function getPoolsForTransactionsWithIndexesBetween(
+            uint startTransactionIndex, uint endTransactionIndex) external view returns (uint[] memory) {
+        require(endTransactionIndex > startTransactionIndex && endTransactionIndex <= _allTransactionsPoolIds.length, "invalid indexes");
+        uint[] memory poolIndexes = new uint[](endTransactionIndex - startTransactionIndex);
+        for (uint i = startTransactionIndex; i < endTransactionIndex; ++i) {
+            poolIndexes[i - startTransactionIndex] = _allTransactionsPoolIds[i];
+        }
+        return poolIndexes;
+    }
+
+    function getPoolsForTransactionsWithIndexesFrom(
+            uint startTransactionIndex) external view returns (uint[] memory) {
+        require(startTransactionIndex < _allTransactionsPoolIds.length, "invalid index");
+        uint[] memory poolIndexes = new uint[](_allTransactionsPoolIds.length - startTransactionIndex);
+        for (uint i = startTransactionIndex; i < _allTransactionsPoolIds.length; ++i) {
+            poolIndexes[i - startTransactionIndex] = _allTransactionsPoolIds[i];
+        }
+        return poolIndexes;
+    }
 }
 /*
-First ECR20 have to approve token for spending by the pool contract and then the pool contract to deposit the token
+First ECR20 have to approve token for spending by the pool contract and then the pool contract can deposit the token
 */
