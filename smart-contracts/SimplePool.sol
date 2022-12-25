@@ -85,12 +85,17 @@ contract SimplePool {
             return amountOut;
         } else if (tokenToBuy == pool.token2) {
             require(pool.token2Amount > 0, "zero amount of token for buy in pool");
-            require(pool.initialToken1Amount > pool.token1Amount, "must have more than initial token1 amount");
-            // optionally if (pool.token1Amount + tokenToSellAmount > pool.initialToken1Amount) then someone is dumping more than initial amount, we can burn
-            uint amountOut = Math.mulDiv(tokenToSellAmount, pool.token2Amount, pool.initialToken1Amount - pool.token1Amount);
+            uint amountOut;
+            if (pool.initialToken1Amount > pool.token1Amount) {
+                amountOut = Math.mulDiv(tokenToSellAmount, pool.token2Amount, pool.initialToken1Amount - pool.token1Amount);
+            } else {
+                // exceptional case someone wants to sell more than initial token1 amount
+                // treat like tokenToSellAmount matchs price with pool.token2Amount
+                amountOut = pool.token2Amount;
+            }
             amountOut = Math.min(amountOut, Math.mulDiv(pool.token2Amount, pool.maxPercentPerTransaction, 100));
             require(pool.token1.allowance(msg.sender, address(this)) >= tokenToSellAmount, "trying to sell more than allowance");
-            require(minReceiveTokenToBuyAmount <= amountOut,"minReceive is less than calcualted amount");
+            require(minReceiveTokenToBuyAmount <= amountOut,"minReceive is more than calcualted amount");
             // complete the transaction now
             require(pool.token1.transferFrom(msg.sender, address(this), tokenToSellAmount), "cannot transfer tokenToSellAmount");
             pool.token1Amount += tokenToSellAmount;
