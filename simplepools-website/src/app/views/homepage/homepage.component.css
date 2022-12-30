@@ -1,0 +1,26 @@
+path {
+    fill: transparent;
+}
+
+.simple-pools text {
+    fill: #FF9800;
+    font-size: 70px;
+}
+
+.simple-pools-mini text {
+    fill: #FF9800;
+    font-size: 7px;
+}
+
+.slogan {
+    color: #FF9800;
+    font-size: 30px;
+    text-align: center;
+}
+
+.show-pools {
+    margin-top: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

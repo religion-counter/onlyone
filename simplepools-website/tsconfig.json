@@ -1,0 +1,95 @@
+/* To learn more about this file see: https://angular.io/config/tsconfig. */
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "baseUrl": "./",
+    "outDir": "./dist/out-tsc",
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "sourceMap": true,
+    "declaration": false,
+    "downlevelIteration": true,
+    "experimentalDecorators": true,
+    "moduleResolution": "node",
+    "importHelpers": true,
+    "resolveJsonModule": true,
+    "target": "ES2022",
+    "module": "es2020",
+    "lib": [
+      "es2018",
+      "dom"
+    ],
+    "paths": {
+      "stream": [
+        "./node_modules/stream-browserify"
+      ],
+      "os": [
+        "./node_modules/os-browserify"
+      ],
+      "crypto": [
+        "./node_modules/crypto-browserify"
+      ],
+      "http": [
+        "./node_modules/stream-http"
+      ],
+      "https": [
+        "./node_modules/https-browserify"
+      ],
+      "console": [
+        "./node_modules/console-browserify"
+      ],
+      "constants": [
+        "./node_modules/constants-browserify"
+      ],
+      "domain": [
+        "./node_modules/domain-browser"
+      ],
+      "events": [
+        "./node_modules/events"
+      ],
+      "path": [
+        "./node_modules/path-browserify"
+      ],
+      "querystring": [
+        "./node_modules/querystring"
+      ],
+      "timers": [
+        "./node_modules/timers-browserify"
+      ],
+      "tty": [
+        "./node_modules/tty-browserify"
+      ],
+      "url": [
+        "./node_modules/url"
+      ],
+      "util": [
+        "./node_modules/util"
+      ],
+      "zlib": [
+        "./node_modules/browserify-zlib"
+      ],
+      "string_decoder": [
+        "./node_modules/string_decoder"
+      ],
+      "assert": [
+        "./node_modules/assert"
+      ],
+      "punycode": [
+        "./node_modules/punycode"
+      ],
+      "process": [
+        "./node_modules/process"
+      ]
+    },
+    "useDefineForClassFields": false
+  },
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "strictTemplates": true,
+    "allowSyntheticDefaultImports": true,
+  }
+}
