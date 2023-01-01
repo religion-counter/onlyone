@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
-import { AppRoutingModule } from './app-routing.module';
+import { AppRoutingModule, routes } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatButtonModule } from '@angular/material/button';
@@ -15,6 +15,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatDialogModule } from '@angular/material/dialog';
 import { PoolsComponent } from './views/pools/pools.component';
 import { HomepageComponent } from './views/homepage/homepage.component';
+import { RouterModule } from '@angular/router';
 
 
 @NgModule({
@@ -29,6 +30,9 @@ import { HomepageComponent } from './views/homepage/homepage.component';
     MatInputModule,
     MatTabsModule,
     MatDialogModule,
+    BrowserModule,
+    BrowserAnimationsModule,
+    RouterModule.forRoot(routes)
     // The HttpClientInMemoryWebApiModule module intercepts HTTP requests
     // and returns simulated server responses.
     // Remove it when a real server is ready to receive requests.
