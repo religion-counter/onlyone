@@ -2,56 +2,47 @@ import { animate, animateChild, group, query, style, transition, trigger } from 
 
 export const slideInAnimation =
   trigger('routeAnimations', [
-    transition('homepage <=> pools', [
-      style({ position: 'relative' }),
+    transition('homepage => pools', [
+      style({
+         position: 'relative',
+      }),
       query(':enter, :leave', [
         style({
           position: 'absolute',
-          top: 0,
-          left: 0,
+          bottom: 0,
+          height: '100%',
           width: '100%'
         })
-      ], { optional: true }),
-      query(':enter', [
-        style({
-            left: '-100%',
-        })
-      ], { optional: true }),
+      ],),
+      query(':enter',  style({ 
+        right: '-100%',
+        bottom: '-1000px',
+      })),
       query(':leave', animateChild()),
       group([
+        query('.slogan', [
+          style({
+            display: 'none',
+         }),
+        ]),
+        query('.show-pools', [
+          style({
+            display: 'none',
+         }),
+        ]),
         query(':leave', [
           animate('300ms ease-out', 
           style({
-            left: '100%',
+            height: '10%',
+            width: '10%',
          }))
-        ], { optional: true }),
+        ],),
         query(':enter', [
-          animate('300ms ease-out', style({ left: '0%' }))
-        ], { optional: true }),
+          animate('300ms ease-out', style({
+             right: '0%',
+             bottom: '0%',
+            }))
+        ]),
       ]),
     ]),
-    transition('* <=> *', [
-      style({ position: 'relative' }),
-      query(':enter, :leave', [
-        style({
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%'
-        })
-      ], { optional: true }),
-      query(':enter', [
-        style({ left: '-100%' })
-      ], { optional: true }),
-      query(':leave', animateChild(), { optional: true }),
-      group([
-        query(':leave', [
-          animate('200ms ease-out', style({ left: '100%', opacity: 0 }))
-        ], { optional: true }),
-        query(':enter', [
-          animate('300ms ease-out', style({ left: '0%', }))
-        ], { optional: true }),
-        query('@*', animateChild(), { optional: true })
-      ]),
-    ])
   ]);
